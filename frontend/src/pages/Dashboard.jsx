@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { fitnessService, goalService } from '../services/api';
 import { 
   Activity, 
@@ -150,10 +150,12 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <button className="flex items-center justify-center space-x-3 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-xl transition shadow-md">
-            <Plus className="w-5 h-5" />
-            <span className="font-semibold">Log Today's Activity</span>
-          </button>
+          <Link
+            to="/log-activity"
+            className="flex items-center justify-center space-x-3 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-xl transition shadow-md">
+          <Plus className="w-5 h-5" />
+          <span className="font-semibold">Log Today's Activity</span>
+          </Link>
           <button className="flex items-center justify-center space-x-3 bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition shadow-md">
             <Target className="w-5 h-5" />
             <span className="font-semibold">Create New Goal</span>
@@ -220,9 +222,11 @@ const Dashboard = () => {
             <p className="text-gray-600 mb-4">
               Start tracking your fitness journey today!
             </p>
-            <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+            <Link
+              to="/log-activity"
+              className="inline-block bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition">
               Log Your First Activity
-            </button>
+            </Link>
           </div>
         )}
 
