@@ -7,6 +7,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import LogActivity from './pages/LogActivity';
+import Goals from './pages/Goals';
+import CreateGoal from './pages/CreateGoal';
+import GoalDetail from './pages/GoalDetail';
 
 
 function App() {
@@ -35,7 +38,30 @@ function App() {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/goals"
+            element={
+              <ProtectedRoute>
+                <Goals />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/goals/create"
+            element={
+              <ProtectedRoute>
+                <CreateGoal />
+              </ProtectedRoute>
+              }
+          />
+          <Route 
+            path="/goals/:id"
+            element={
+              <ProtectedRoute>
+                <GoalDetail />
+              </ProtectedRoute>
+              }
+          />
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
 

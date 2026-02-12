@@ -156,10 +156,13 @@ const Dashboard = () => {
           <Plus className="w-5 h-5" />
           <span className="font-semibold">Log Today's Activity</span>
           </Link>
-          <button className="flex items-center justify-center space-x-3 bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition shadow-md">
+          <Link
+            to="/goals/create"
+            className="flex items-center justify-center space-x-3 bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition shadow-md"
+          >
             <Target className="w-5 h-5" />
             <span className="font-semibold">Create New Goal</span>
-          </button>
+          </Link>
           <button className="flex items-center justify-center space-x-3 bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition shadow-md">
             <TrendingUp className="w-5 h-5" />
             <span className="font-semibold">View Statistics</span>
@@ -236,9 +239,12 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-gray-900">
               Active Goals ({activeGoals.length})
             </h3>
-            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
+            <Link
+              to="/goals"
+              className="text-primary-600 hover:text-primary-700 font-medium text-sm"
+            >
               View All →
-            </button>
+            </Link>
           </div>
 
           {activeGoals.length > 0 ? (
@@ -251,9 +257,12 @@ const Dashboard = () => {
             <div className="text-center py-8">
               <Target className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 mb-4">No active goals yet</p>
-              <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition">
+              <Link
+                to="/goals/create"
+                className="inline-block bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition"
+              >
                 Create Your First Goal
-              </button>
+              </Link>
             </div>
           )}
         </div>
