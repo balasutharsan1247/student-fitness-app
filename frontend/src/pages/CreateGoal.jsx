@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { goalService } from '../services/api';
 import { ArrowLeft, Target, Save } from 'lucide-react';
+import Layout from '../components/Layout';
 
 const CreateGoal = () => {
   const navigate = useNavigate();
@@ -72,27 +73,8 @@ const CreateGoal = () => {
   };
 
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/goals"
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Create New Goal</h1>
-              <p className="text-sm text-gray-600">
-                Set a new fitness goal to achieve
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
@@ -100,6 +82,19 @@ const CreateGoal = () => {
             {error}
           </div>
         )}
+        <div className="mb-8">
+          <Link
+            to="/goals"
+            className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Goals
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Create New Goal</h1>
+          <p className="text-gray-600 mt-1">
+            Set a new fitness goal to achieve
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
@@ -320,6 +315,7 @@ const CreateGoal = () => {
         </form>
       </main>
     </div>
+    </Layout>
   );
 };
 

@@ -10,6 +10,8 @@ import LogActivity from './pages/LogActivity';
 import Goals from './pages/Goals';
 import CreateGoal from './pages/CreateGoal';
 import GoalDetail from './pages/GoalDetail';
+import Statistics from './pages/Statistics';
+import Profile from './pages/Profile';
 
 
 function App() {
@@ -28,6 +30,22 @@ function App() {
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/statistics"
+            element={
+            <ProtectedRoute>
+              <Statistics />
+            </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
             }
           />
           <Route

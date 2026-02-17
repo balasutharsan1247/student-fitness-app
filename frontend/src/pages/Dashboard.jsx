@@ -20,6 +20,7 @@ import StatCard from '../components/StatCard';
 import LifestyleScoreCard from '../components/LifestyleScoreCard';
 import WeeklyChart from '../components/WeeklyChart';
 import GoalCard from '../components/GoalCard';
+import Layout from '../components/Layout';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -82,55 +83,8 @@ const Dashboard = () => {
   const weekData = dashboardData?.weekSummary;
 
   return (
+  <Layout>
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="bg-primary-500 p-2 rounded-lg">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Fitness Tracker
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Welcome back, {user?.firstName}!
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* User points and level */}
-              <div className="hidden md:flex items-center space-x-4">
-                <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-2 rounded-lg">
-                  <Award className="w-5 h-5 text-yellow-600" />
-                  <span className="font-semibold text-yellow-900">
-                    {user?.points || 0} pts
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2 bg-purple-50 px-3 py-2 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
-                  <span className="font-semibold text-purple-900">
-                    Level {user?.level || 1}
-                  </span>
-                </div>
-              </div>
-              
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -152,9 +106,10 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Link
             to="/log-activity"
-            className="flex items-center justify-center space-x-3 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-xl transition shadow-md">
-          <Plus className="w-5 h-5" />
-          <span className="font-semibold">Log Today's Activity</span>
+            className="flex items-center justify-center space-x-3 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-xl transition shadow-md"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="font-semibold">Log Today's Activity</span>
           </Link>
           <Link
             to="/goals/create"
@@ -163,10 +118,13 @@ const Dashboard = () => {
             <Target className="w-5 h-5" />
             <span className="font-semibold">Create New Goal</span>
           </Link>
-          <button className="flex items-center justify-center space-x-3 bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition shadow-md">
+          <Link
+            to="/statistics"
+            className="flex items-center justify-center space-x-3 bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition shadow-md"
+          >
             <TrendingUp className="w-5 h-5" />
             <span className="font-semibold">View Statistics</span>
-          </button>
+          </Link>
         </div>
 
         {todayData ? (
@@ -227,7 +185,8 @@ const Dashboard = () => {
             </p>
             <Link
               to="/log-activity"
-              className="inline-block bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+              className="inline-block bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition"
+            >
               Log Your First Activity
             </Link>
           </div>
@@ -268,7 +227,8 @@ const Dashboard = () => {
         </div>
       </main>
     </div>
-  );
+  </Layout>
+);
 };
 
 export default Dashboard;

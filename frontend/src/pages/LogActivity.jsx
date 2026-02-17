@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fitnessService } from '../services/api';
+import Layout from '../components/Layout';
 import { 
   Activity, 
   ArrowLeft, 
@@ -233,27 +234,8 @@ const LogActivity = () => {
   };
 
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/dashboard"
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Log Activity</h1>
-              <p className="text-sm text-gray-600">
-                Track your fitness for today
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Message */}
@@ -820,6 +802,7 @@ const LogActivity = () => {
         </form>
       </main>
     </div>
+    </Layout>
   );
 };
 

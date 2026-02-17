@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { goalService } from '../services/api';
+import Layout from '../components/Layout';
 import { 
   ArrowLeft, 
   Target, 
@@ -198,47 +199,8 @@ const GoalDetail = () => {
   };
 
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/goals"
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </Link>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Goal Details</h1>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center space-x-2">
-              {goal.status !== 'Completed' && goal.status !== 'Abandoned' && (
-                <button
-                  onClick={handleCompleteGoal}
-                  disabled={updating}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition text-sm font-semibold disabled:opacity-50"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Complete</span>
-                </button>
-              )}
-              <button
-                onClick={handleDeleteGoal}
-                disabled={updating}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
-                title="Delete Goal"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Message */}
@@ -254,6 +216,40 @@ const GoalDetail = () => {
             {error}
           </div>
         )}
+
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link
+              to="/goals"
+              className="inline-flex items-center text-primary-600 hover:text-primary-700"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Goals
+            </Link>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center space-x-2">
+            {goal.status !== 'Completed' && goal.status !== 'Abandoned' && (
+              <button
+                onClick={handleCompleteGoal}
+                disabled={updating}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition text-sm font-semibold disabled:opacity-50"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Complete</span>
+              </button>
+            )}
+            <button
+              onClick={handleDeleteGoal}
+              disabled={updating}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
+              title="Delete Goal"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Goal Info */}
@@ -526,6 +522,7 @@ const GoalDetail = () => {
         </div>
       </main>
     </div>
+    </Layout>
   );
 };
 
