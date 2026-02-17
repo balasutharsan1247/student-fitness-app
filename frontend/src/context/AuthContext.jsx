@@ -15,17 +15,41 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check if user is logged in on mount
   useEffect(() => {
-    const token = authService.getToken();
-    const savedUser = authService.getUser();
-    
-    if (token && savedUser) {
-      setUser(savedUser);
-    }
-    
-    setLoading(false);
+    const initializeAuth = async () => {
+      const token = authService.getToken();
+      const savedUser = authService.getUser();
+
+      if (token && savedUser) {
+        // Set saved user immediately (fast)
+        setUser(savedUser);
+
+        // Then fetch fresh data from backend (accurate)
+        try {
+          const response = await authService.getCurrentUser();
+          if (response.user) {
+            setUser(response.user);
+            // Update localStorage with fresh data
+            localStorage.setItem('user', JSON.stringify(response.user));
+          }
+        } catch (err) {
+          console.error('Failed to refresh user data:', err);
+          // If token expired or invalid, logout
+          if (err.response?.status === 401) {
+            authService.logout();
+            setUser(null);
+          }
+        }
+      }
+
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
+  // Login function
   const login = async (email, password) => {
     try {
       const data = await authService.login(email, password);
@@ -39,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Register function
   const register = async (userData) => {
     try {
       const data = await authService.register(userData);
@@ -52,13 +77,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout function
   const logout = () => {
     authService.logout();
     setUser(null);
   };
 
+  // Update user in context AND localStorage
   const updateUser = (userData) => {
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  // Refresh user from backend
+  const refreshUser = async () => {
+    try {
+      const response = await authService.getCurrentUser();
+      if (response.user) {
+        setUser(response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        return response.user;
+      }
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
   };
 
   const value = {
@@ -68,8 +110,13 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    refreshUser,
     isAuthenticated: !!user,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

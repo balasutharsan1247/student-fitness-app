@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { goalService } from '../services/api';
 import Layout from '../components/Layout';
 import { 
@@ -18,7 +19,7 @@ import {
 const GoalDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { refreshUser } = useAuth();
   const [goal, setGoal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -50,69 +51,87 @@ const GoalDetail = () => {
 
   // Update progress
   const handleUpdateProgress = async (e) => {
-    e.preventDefault();
-    setUpdating(true);
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setUpdating(true);
+  setError('');
+  setSuccess('');
 
-    try {
-      let updateData = {};
+  try {
+    let updateData = {};
 
-      if (addToValue) {
-        updateData.addToValue = parseFloat(addToValue);
-      } else if (progressValue) {
-        updateData.currentValue = parseFloat(progressValue);
+    if (addToValue) {
+      updateData.addToValue = parseFloat(addToValue);
+    } else if (progressValue !== '') {
+      updateData.currentValue = parseFloat(progressValue);
+    } else {
+      setError('Please enter a value');
+      setUpdating(false);
+      return;
+    }
+
+    const response = await goalService.updateProgress(id, updateData);
+
+    if (response.success) {
+      const updatedGoal = response.data;
+      setGoal(updatedGoal);
+      setProgressValue(updatedGoal.currentValue);
+      setAddToValue('');
+
+      // Check if goal was auto-completed
+      if (updatedGoal.status === 'Completed') {
+        setSuccess(
+          `🎉 Goal auto-completed! Points awarded: ${updatedGoal.points}`
+        );
+        // Refresh user to update points in navbar
+        await refreshUser();
+        // Redirect after 2.5 seconds
+        setTimeout(() => navigate('/goals'), 2500);
       } else {
-        setError('Please enter a value');
-        setUpdating(false);
-        return;
-      }
-
-      const response = await goalService.updateProgress(id, updateData);
-      
-      if (response.success) {
-        setGoal(response.data);
-        setProgressValue(response.data.currentValue);
-        setAddToValue('');
-        setSuccess('Progress updated successfully!');
-        
-        // Clear success message after 3 seconds
+        setSuccess(
+          `✅ Progress updated! ${updatedGoal.currentValue} / ${updatedGoal.targetValue} ${updatedGoal.unit}`
+        );
         setTimeout(() => setSuccess(''), 3000);
       }
-    } catch (err) {
-      console.error('Update progress error:', err);
-      setError(err.response?.data?.message || 'Failed to update progress');
-    } finally {
-      setUpdating(false);
     }
-  };
-
+  } catch (err) {
+    console.error('Update progress error:', err);
+    setError(err.response?.data?.message || 'Failed to update progress');
+  } finally {
+    setUpdating(false);
+  }
+};
   // Complete goal
-  const handleCompleteGoal = async () => {
-    if (!window.confirm('Mark this goal as completed?')) return;
+        const handleCompleteGoal = async () => {
+        if (!window.confirm('Mark this goal as completed?')) return;
 
-    setUpdating(true);
-    setError('');
+        setUpdating(true);
+        setError('');
 
-    try {
-      const response = await goalService.completeGoal(id);
-      
-      if (response.success) {
-        setSuccess(`Goal completed! You earned ${response.data.pointsAwarded} points!`);
-        setGoal(response.data.goal);
-        
-        // Redirect after 2 seconds
-        setTimeout(() => {
-          navigate('/goals');
-        }, 2000);
-      }
-    } catch (err) {
-      console.error('Complete goal error:', err);
-      setError(err.response?.data?.message || 'Failed to complete goal');
-    } finally {
-      setUpdating(false);
-    }
-  };
+        try {
+          const response = await goalService.completeGoal(id);
+          
+          if (response.success) {
+            // Show success with points earned
+            setSuccess(
+              `🎉 Goal completed! You earned ${response.data.pointsAwarded} points! Total: ${response.data.totalPoints} points`
+            );
+            setGoal(response.data.goal);
+
+            // Refresh user data so navbar/profile shows new points
+            await refreshUser();
+
+            // Redirect after 2.5 seconds
+            setTimeout(() => {
+              navigate('/goals');
+            }, 2500);
+          }
+        } catch (err) {
+          console.error('Complete goal error:', err);
+          setError(err.response?.data?.message || 'Failed to complete goal');
+        } finally {
+          setUpdating(false);
+        }
+      };
 
   // Abandon goal
   const handleAbandonGoal = async () => {

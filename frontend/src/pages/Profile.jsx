@@ -49,75 +49,101 @@ const Profile = () => {
 
             {/* Profile Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+            <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                  <User className="w-4 h-4" />
-                  <span>Full Name</span>
+                <User className="w-4 h-4" />
+                <span>Full Name</span>
                 </label>
                 <p className="text-gray-900 font-semibold">
-                  {user?.firstName} {user?.lastName}
+                {user?.firstName} {user?.lastName}
                 </p>
-              </div>
+            </div>
 
-              <div>
+            <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                  <Mail className="w-4 h-4" />
-                  <span>Email</span>
+                <Mail className="w-4 h-4" />
+                <span>Email</span>
                 </label>
                 <p className="text-gray-900 font-semibold">{user?.email}</p>
-              </div>
+            </div>
 
-              <div>
+            <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                  <Building className="w-4 h-4" />
-                  <span>University</span>
+                <Building className="w-4 h-4" />
+                <span>University</span>
                 </label>
-                <p className="text-gray-900 font-semibold">{user?.university}</p>
-              </div>
+                <p className="text-gray-900 font-semibold">{user?.university || '—'}</p>
+            </div>
 
-              <div>
+            <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span>Student ID</span>
+                <BookOpen className="w-4 h-4" />
+                <span>Student ID</span>
                 </label>
-                <p className="text-gray-900 font-semibold">{user?.studentId}</p>
-              </div>
+                <p className="text-gray-900 font-semibold">{user?.studentId || '—'}</p>
+            </div>
 
-              {user?.major && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600 mb-2 block">
-                    Major
-                  </label>
-                  <p className="text-gray-900 font-semibold">{user?.major}</p>
-                </div>
-              )}
+            {/* Department (was Major) */}
+            <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                Department
+                </label>
+                <p className="text-gray-900 font-semibold">{user?.department || '—'}</p>
+            </div>
 
-              {user?.year && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600 mb-2 block">
-                    Year
-                  </label>
-                  <p className="text-gray-900 font-semibold">{user?.year}</p>
-                </div>
-              )}
+            {/* Graduate Type */}
+            <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                Graduate Type
+                </label>
+                <p className="text-gray-900 font-semibold">{user?.graduateType || '—'}</p>
+            </div>
 
-              {user?.age && (
+            {/* Year */}
+            <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                Year
+                </label>
+                <p className="text-gray-900 font-semibold">
+                {user?.year ? `${user.year}` : '—'}
+                </p>
+            </div>
+
+            {/* Date of Birth */}
+            <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                Date of Birth
+                </label>
+                <p className="text-gray-900 font-semibold">
+                {user?.dateOfBirth
+                    ? new Date(user.dateOfBirth).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                    })
+                    : '—'}
+                </p>
+            </div>
+
+            {/* Age */}
+            {user?.age && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600 mb-2 block">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                     Age
-                  </label>
-                  <p className="text-gray-900 font-semibold">{user?.age} years</p>
+                </label>
+                <p className="text-gray-900 font-semibold">{user.age} years</p>
                 </div>
-              )}
+            )}
 
-              {user?.gender && (
+            {/* Gender */}
+            {user?.gender && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600 mb-2 block">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                     Gender
-                  </label>
-                  <p className="text-gray-900 font-semibold">{user?.gender}</p>
+                </label>
+                <p className="text-gray-900 font-semibold">{user.gender}</p>
                 </div>
-              )}
+            )}
             </div>
 
             {/* Badges Section */}

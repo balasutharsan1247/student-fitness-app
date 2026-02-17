@@ -35,25 +35,30 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // Student Information
+    // Student information
     studentId: {
       type: String,
-      required: [true, 'Please provide your student ID'],
       unique: true,
-      trim: true,
+      sparse: true,
     },
     university: {
       type: String,
-      required: [true, 'Please provide your university name'],
       trim: true,
     },
-    major: {
+    department: {
       type: String,
       trim: true,
+    },
+    graduateType: {
+      type: String,
+      enum: ['Under-graduate', 'Post-graduate'],
     },
     year: {
       type: String,
-      enum: ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate'],
+      enum: ['I', 'II', 'III', 'IV'],
+    },
+    dateOfBirth: {
+      type: Date,
     },
 
     // Profile Information
@@ -154,10 +159,9 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
 // Method to get public profile (without sensitive info)
 userSchema.methods.getPublicProfile = function () {
-  const user = this.toObject();
-  delete user.password;
-  delete user.__v;
-  return user;
+  const userObject = this.toObject();
+  delete userObject.password;
+  return userObject;
 };
 
 // Create and export the User model

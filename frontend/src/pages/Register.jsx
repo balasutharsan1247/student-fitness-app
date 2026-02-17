@@ -15,11 +15,13 @@ const Register = () => {
     confirmPassword: '',
     studentId: '',
     university: '',
-    major: '',
+    department: '',
+    graduateType: '',
     year: '',
+    dateOfBirth: '',
     age: '',
     gender: '',
-  });
+});
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,11 @@ const Register = () => {
     // Convert age to number if provided
     if (registerData.age) {
       registerData.age = parseInt(registerData.age);
+    }
+
+    // Convert dateOfBirth to date if provided
+    if (registerData.dateOfBirth) {
+      registerData.dateOfBirth = new Date(registerData.dateOfBirth).toISOString();
     }
 
     // Call register function
@@ -180,6 +187,7 @@ const Register = () => {
                 Academic Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                 {/* University */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -196,22 +204,39 @@ const Register = () => {
                   />
                 </div>
 
-                {/* Major */}
+                {/* Department */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Major
+                    Department
                   </label>
                   <input
                     type="text"
-                    name="major"
-                    value={formData.major}
+                    name="department"
+                    value={formData.department}
                     onChange={handleChange}
                     placeholder="Computer Science"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                   />
                 </div>
 
-                {/* Year */}
+                {/* Graduate Type (NEW) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Graduate Type
+                  </label>
+                  <select
+                    name="graduateType"
+                    value={formData.graduateType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  >
+                    <option value="">Select Type</option>
+                    <option value="Under-graduate">Under-graduate</option>
+                    <option value="Post-graduate">Post-graduate</option>
+                  </select>
+                </div>
+
+                {/* Year (Updated values) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Year
@@ -223,12 +248,26 @@ const Register = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                   >
                     <option value="">Select Year</option>
-                    <option value="Freshman">Freshman</option>
-                    <option value="Sophomore">Sophomore</option>
-                    <option value="Junior">Junior</option>
-                    <option value="Senior">Senior</option>
-                    <option value="Graduate">Graduate</option>
+                    <option value="I">I</option>
+                    <option value="II">II</option>
+                    <option value="III">III</option>
+                    <option value="IV">IV</option>
                   </select>
+                </div>
+
+                {/* Date of Birth (NEW) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date of Birth
+                  </label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  />
                 </div>
 
                 {/* Age */}
@@ -266,6 +305,7 @@ const Register = () => {
                     <option value="Prefer not to say">Prefer not to say</option>
                   </select>
                 </div>
+
               </div>
             </div>
 
