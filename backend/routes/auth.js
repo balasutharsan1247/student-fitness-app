@@ -5,6 +5,7 @@ const {
   getMe,
   updateProfile,
   updatePassword,
+  recalculateLevel,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
@@ -31,6 +32,9 @@ router.put('/updateprofile', protect, updateProfile);
 
 // Update password
 router.put('/updatepassword', protect, updatePassword);
+
+// Recalculate level
+router.put('/recalculate-level', protect, recalculateLevel);
 
 // Export router
 module.exports = router;

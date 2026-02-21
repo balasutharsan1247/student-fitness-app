@@ -267,3 +267,47 @@ exports.updatePassword = async (req, res) => {
     });
   }
 };
+
+// @desc    Recalculate user level based on points
+// @route   PUT /api/auth/recalculate-level
+// @access  Private
+exports.recalculateLevel = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Calculate correct level
+    let correctLevel = 1;
+    if (user.points >= 500) {
+      correctLevel = 2 + Math.floor((user.points - 500) / 125);
+    }
+
+    const oldLevel = user.level;
+    user.level = correctLevel;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Level recalculated successfully',
+      data: {
+        points: user.points,
+        oldLevel,
+        newLevel: correctLevel,
+      },
+    });
+  } catch (error) {
+    console.error('Recalculate Level Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error recalculating level',
+      error: error.message,
+    });
+  }
+};

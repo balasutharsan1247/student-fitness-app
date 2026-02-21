@@ -157,6 +157,36 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Check and update user level based on points
+userSchema.methods.updateLevel = function () {
+  let calculatedLevel = 1;
+  
+  if (this.points >= 500) {
+    calculatedLevel = 2 + Math.floor((this.points - 500) / 125);
+  }
+  
+  if (calculatedLevel > this.level) {
+    this.level = calculatedLevel;
+    return true; // Leveled up
+  }
+  
+  return false; // No level change
+};
+
+// Get points needed for next level
+userSchema.methods.getPointsToNextLevel = function () {
+  let pointsForNextLevel;
+  
+  if (this.level === 1) {
+    pointsForNextLevel = 500; // Need 500 to reach level 2
+  } else {
+    // After level 2, need 125 points per level
+    pointsForNextLevel = 500 + ((this.level - 1) * 125);
+  }
+  
+  return pointsForNextLevel - this.points;
+};
+
 // Method to get public profile (without sensitive info)
 userSchema.methods.getPublicProfile = function () {
   const userObject = this.toObject();

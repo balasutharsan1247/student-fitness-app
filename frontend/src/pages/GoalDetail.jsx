@@ -59,7 +59,7 @@ const GoalDetail = () => {
   try {
     let updateData = {};
 
-    if (addToValue) {
+    if (addToValue !== '') {
       updateData.addToValue = parseFloat(addToValue);
     } else if (progressValue !== '') {
       updateData.currentValue = parseFloat(progressValue);
@@ -78,12 +78,20 @@ const GoalDetail = () => {
       setAddToValue('');
 
       // Check if goal was auto-completed
-      if (updatedGoal.status === 'Completed') {
-        setSuccess(
-          `🎉 Goal auto-completed! Points awarded: ${updatedGoal.points}`
-        );
+      if (response.pointsAwarded) {
+        let message = `🎉 Goal Auto-Completed!\n\n`;
+        message += `Points Earned: ${response.pointsAwarded}\n`;
+        message += `Total Points: ${response.totalPoints}`;
+
+        if (response.levelUp) {
+          message += `\n\n🌟 ${response.levelUp.message} 🌟`;
+        }
+
+        setSuccess(message);
+
         // Refresh user to update points in navbar
         await refreshUser();
+
         // Redirect after 2.5 seconds
         setTimeout(() => navigate('/goals'), 2500);
       } else {
@@ -102,36 +110,64 @@ const GoalDetail = () => {
 };
   // Complete goal
         const handleCompleteGoal = async () => {
-        if (!window.confirm('Mark this goal as completed?')) return;
+  if (!window.confirm('Mark this goal as completed?')) return;
 
-        setUpdating(true);
-        setError('');
+  setUpdating(true);
+  setError('');
 
-        try {
-          const response = await goalService.completeGoal(id);
-          
-          if (response.success) {
-            // Show success with points earned
-            setSuccess(
-              `🎉 Goal completed! You earned ${response.data.pointsAwarded} points! Total: ${response.data.totalPoints} points`
-            );
-            setGoal(response.data.goal);
+  try {
+    const response = await goalService.completeGoal(id);
 
-            // Refresh user data so navbar/profile shows new points
-            await refreshUser();
+    if (response.success) {
+      const {
+        pointsAwarded,
+        previousPoints,
+        totalPoints,
+        pointsBreakdown,
+        levelUp,
+      } = response.data;
 
-            // Redirect after 2.5 seconds
-            setTimeout(() => {
-              navigate('/goals');
-            }, 2500);
-          }
-        } catch (err) {
-          console.error('Complete goal error:', err);
-          setError(err.response?.data?.message || 'Failed to complete goal');
-        } finally {
-          setUpdating(false);
-        }
-      };
+      // Build success message with breakdown
+      let message = '🎉 Goal Completed!\n\n';
+      message += '━━━━━━━━━━━━━━━━━━━━\n';
+      message += 'POINTS BREAKDOWN:\n';
+      message += '━━━━━━━━━━━━━━━━━━━━\n\n';
+
+      if (pointsBreakdown.details) {
+        pointsBreakdown.details.forEach((detail) => {
+          message += `• ${detail.label}: +${detail.value}\n`;
+        });
+      }
+
+      message += '\n━━━━━━━━━━━━━━━━━━━━\n';
+      message += `Total Earned: ${pointsAwarded} points\n`;
+      message += `Previous Total: ${previousPoints} pts\n`;
+      message += `New Total: ${totalPoints} pts\n`;
+      message += '━━━━━━━━━━━━━━━━━━━━';
+
+      if (levelUp) {
+        message += `\n\n🌟 ${levelUp.message} 🌟`;
+        message += `\n(${levelUp.previousLevel} → ${levelUp.newLevel})`;
+      }
+
+      setSuccess(message);
+      setGoal(response.data.goal);
+
+      // Refresh user data to update navbar
+      await refreshUser();
+
+      // Redirect after 4 seconds
+      setTimeout(() => {
+        navigate('/goals');
+      }, 4000);
+    }
+  } catch (err) {
+    console.error('Complete goal error:', err);
+    setError(err.response?.data?.message || 'Failed to complete goal');
+  } finally {
+    setUpdating(false);
+  }
+};
 
   // Abandon goal
   const handleAbandonGoal = async () => {
@@ -156,21 +192,42 @@ const GoalDetail = () => {
   };
 
   // Delete goal
-  const handleDeleteGoal = async () => {
-    if (!window.confirm('Are you sure you want to delete this goal? This action cannot be undone.')) return;
+  // Delete goal
+    const handleDeleteGoal = async () => {
+      if (!window.confirm('Are you sure you want to delete this goal? This action cannot be undone.')) 
+        return;
 
-    setUpdating(true);
-    setError('');
+      setUpdating(true);
+      setError('');
 
-    try {
-      await goalService.deleteGoal(id);
-      navigate('/goals');
-    } catch (err) {
-      console.error('Delete goal error:', err);
-      setError(err.response?.data?.message || 'Failed to delete goal');
-      setUpdating(false);
-    }
-  };
+      try {
+        const response = await goalService.deleteGoal(id);
+
+        if (response.success) {
+          // Check if points were deducted
+          if (response.data.pointsDeducted) {
+            // Show message about points deduction
+            const message = `Goal deleted!\n\nPoints deducted: ${response.data.pointsDeducted}\nNew total: ${response.data.newPoints} pts`;
+            
+            if (response.data.levelChanged) {
+              alert(`${message}\n\nLevel changed: ${response.data.previousLevel} → ${response.data.newLevel}`);
+            } else {
+              alert(message);
+            }
+
+            // Refresh user data to update navbar and profile
+            await refreshUser();
+          }
+
+          // Navigate back to goals page
+          navigate('/goals');
+        }
+      } catch (err) {
+        console.error('Delete goal error:', err);
+        setError(err.response?.data?.message || 'Failed to delete goal');
+        setUpdating(false);
+      }
+    };
 
   if (loading) {
     return (
@@ -223,9 +280,12 @@ const GoalDetail = () => {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Message */}
+        {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-            ✅ {success}
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-lg">
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+              {success}
+            </pre>
           </div>
         )}
 

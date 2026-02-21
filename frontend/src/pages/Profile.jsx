@@ -1,6 +1,6 @@
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
-import { User, Award, TrendingUp, Mail, Building, BookOpen } from 'lucide-react';
+import { User, Award, TrendingUp, Mail, Building, BookOpen, Calendar } from 'lucide-react';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -25,23 +25,60 @@ const Profile = () => {
                   {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                 </span>
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-2xl font-bold text-gray-900">
                   {user?.firstName} {user?.lastName}
                 </h2>
                 <p className="text-gray-600">{user?.email}</p>
-                <div className="flex items-center space-x-4 mt-3">
-                  <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-1 rounded-full">
-                    <Award className="w-4 h-4 text-yellow-600" />
-                    <span className="font-semibold text-yellow-900">
-                      {user?.points || 0} pts
-                    </span>
+                
+                {/* Points and Level */}
+                <div className="mt-4">
+                  <div className="flex items-center space-x-4 mb-3">
+                    <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-1 rounded-full">
+                      <Award className="w-4 h-4 text-yellow-600" />
+                      <span className="font-semibold text-yellow-900">
+                        {user?.points || 0} pts
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 bg-purple-50 px-3 py-1 rounded-full">
+                      <TrendingUp className="w-4 h-4 text-purple-600" />
+                      <span className="font-semibold text-purple-900">
+                        Level {user?.level || 1}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2 bg-purple-50 px-3 py-1 rounded-full">
-                    <TrendingUp className="w-4 h-4 text-purple-600" />
-                    <span className="font-semibold text-purple-900">
-                      Level {user?.level || 1}
-                    </span>
+
+                  {/* Level Progress Bar */}
+                  <div className="mt-3">
+                    {(() => {
+                      const currentPoints = user?.points || 0;
+                      const currentLevel = user?.level || 1;
+                      const pointsForNextLevel = currentLevel * 500;
+                      const pointsInCurrentLevel = currentPoints % 500;
+                      const pointsNeeded = pointsForNextLevel - currentPoints;
+                      const progressPercent = (pointsInCurrentLevel / 500) * 100;
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-gray-600">Progress to Level {currentLevel + 1}</span>
+                            <span className="font-semibold text-purple-600">
+                              {pointsNeeded > 0 ? `${pointsNeeded} pts to go` : 'Level capped!'}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
+                            <span>{pointsInCurrentLevel} pts in current level</span>
+                            <span>500 pts per level</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -49,101 +86,106 @@ const Profile = () => {
 
             {/* Profile Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+              <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                <User className="w-4 h-4" />
-                <span>Full Name</span>
+                  <User className="w-4 h-4" />
+                  <span>Full Name</span>
                 </label>
                 <p className="text-gray-900 font-semibold">
-                {user?.firstName} {user?.lastName}
+                  {user?.firstName} {user?.lastName}
                 </p>
-            </div>
+              </div>
 
-            <div>
+              <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                <Mail className="w-4 h-4" />
-                <span>Email</span>
+                  <Mail className="w-4 h-4" />
+                  <span>Email</span>
                 </label>
                 <p className="text-gray-900 font-semibold">{user?.email}</p>
-            </div>
+              </div>
 
-            <div>
+              <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                <Building className="w-4 h-4" />
-                <span>University</span>
+                  <Building className="w-4 h-4" />
+                  <span>University</span>
                 </label>
                 <p className="text-gray-900 font-semibold">{user?.university || '—'}</p>
-            </div>
+              </div>
 
-            <div>
+              <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
-                <BookOpen className="w-4 h-4" />
-                <span>Student ID</span>
+                  <BookOpen className="w-4 h-4" />
+                  <span>Student ID</span>
                 </label>
                 <p className="text-gray-900 font-semibold">{user?.studentId || '—'}</p>
-            </div>
+              </div>
 
-            {/* Department (was Major) */}
-            <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                Department
-                </label>
-                <p className="text-gray-900 font-semibold">{user?.department || '—'}</p>
-            </div>
-
-            {/* Graduate Type */}
-            <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                Graduate Type
-                </label>
-                <p className="text-gray-900 font-semibold">{user?.graduateType || '—'}</p>
-            </div>
-
-            {/* Year */}
-            <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                Year
-                </label>
-                <p className="text-gray-900 font-semibold">
-                {user?.year ? `${user.year}` : '—'}
-                </p>
-            </div>
-
-            {/* Date of Birth */}
-            <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                Date of Birth
-                </label>
-                <p className="text-gray-900 font-semibold">
-                {user?.dateOfBirth
-                    ? new Date(user.dateOfBirth).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                    })
-                    : '—'}
-                </p>
-            </div>
-
-            {/* Age */}
-            {user?.age && (
+              {/* Department */}
+              {user?.department && (
                 <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Department
+                  </label>
+                  <p className="text-gray-900 font-semibold">{user.department}</p>
+                </div>
+              )}
+
+              {/* Graduate Type */}
+              {user?.graduateType && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Graduate Type
+                  </label>
+                  <p className="text-gray-900 font-semibold">{user.graduateType}</p>
+                </div>
+              )}
+
+              {/* Year */}
+              {user?.year && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Year
+                  </label>
+                  <p className="text-gray-900 font-semibold">Year {user.year}</p>
+                </div>
+              )}
+
+              {/* Date of Birth */}
+              {user?.dateOfBirth && (
+                <div>
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>Date of Birth</span>
+                  </label>
+                  <p className="text-gray-900 font-semibold">
+                    {new Date(user.dateOfBirth).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Age */}
+              {user?.age && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Age
-                </label>
-                <p className="text-gray-900 font-semibold">{user.age} years</p>
+                  </label>
+                  <p className="text-gray-900 font-semibold">{user.age} years</p>
                 </div>
-            )}
+              )}
 
-            {/* Gender */}
-            {user?.gender && (
+              {/* Gender */}
+              {user?.gender && (
                 <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Gender
-                </label>
-                <p className="text-gray-900 font-semibold">{user.gender}</p>
+                  </label>
+                  <p className="text-gray-900 font-semibold">{user.gender}</p>
                 </div>
-            )}
+              )}
             </div>
 
             {/* Badges Section */}

@@ -33,14 +33,17 @@ exports.createGoal = async (req, res) => {
       });
     }
 
-    // Create goal
+   // Create goal
+    const currentVal = currentValue !== undefined ? currentValue : 0;
+
     const goal = await Goal.create({
       user: userId,
       title,
       description,
       category,
       targetValue,
-      currentValue: currentValue || 0,
+      currentValue: currentVal,
+      startingValue: currentVal,  // ✅ Set startingValue explicitly!
       unit,
       startDate: startDate || Date.now(),
       targetDate,
@@ -62,7 +65,7 @@ exports.createGoal = async (req, res) => {
     });
   } catch (error) {
     console.error('Create Goal Error:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
@@ -91,11 +94,11 @@ exports.getAllGoals = async (req, res) => {
 
     // Build filter
     const filter = { user: userId };
-    
+
     if (status) {
       filter.status = status;
     }
-    
+
     if (category) {
       filter.category = category;
     }
@@ -127,7 +130,7 @@ exports.getActiveGoals = async (req, res) => {
     const goals = await Goal.find({
       user: userId,
       status: { $in: ['Not Started', 'In Progress'] },
-    }).sort({ targetDate: 1 }); // Sort by nearest deadline first
+    }).sort({ targetDate: 1 });
 
     res.status(200).json({
       success: true,
@@ -154,7 +157,7 @@ exports.getCompletedGoals = async (req, res) => {
     const goals = await Goal.find({
       user: userId,
       status: 'Completed',
-    }).sort({ completedDate: -1 }); // Most recently completed first
+    }).sort({ completedDate: -1 });
 
     res.status(200).json({
       success: true,
@@ -272,7 +275,7 @@ exports.updateGoal = async (req, res) => {
     });
   } catch (error) {
     console.error('Update Goal Error:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
@@ -317,10 +320,8 @@ exports.updateProgress = async (req, res) => {
 
     // Update current value
     if (addToValue !== undefined) {
-      // Add to current value (e.g., ran 3km, add to total)
       goal.currentValue = (goal.currentValue || 0) + addToValue;
     } else if (currentValue !== undefined) {
-      // Set current value (e.g., current weight is 70kg)
       goal.currentValue = currentValue;
     } else {
       return res.status(400).json({
@@ -332,17 +333,39 @@ exports.updateProgress = async (req, res) => {
     // Recalculate progress
     goal.calculateProgress();
 
-    // Award points if completed
-    if (goal.status === 'Completed') {
-      goal.awardPoints();
-      
-      // Update user points
-      const user = await User.findById(userId);
-      user.points += goal.points;
-      await user.save();
-    }
+    // Check if auto-completed
+    const wasCompleted = goal.status === 'Completed';
 
     await goal.save();
+
+    // Award points and update user if completed
+    if (wasCompleted) {
+      const user = await User.findById(userId);
+      const previousPoints = user.points || 0;
+      const previousLevel = user.level || 1;
+
+      user.points += goal.points;
+      const newLevel = Math.floor(user.points / 500) + 1;
+      user.level = newLevel;
+
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Goal auto-completed! Progress updated and points awarded.',
+        data: goal,
+        pointsAwarded: goal.points,
+        totalPoints: user.points,
+        levelUp:
+          newLevel > previousLevel
+            ? {
+                previousLevel,
+                newLevel,
+                message: `🎉 Level Up! You're now Level ${newLevel}!`,
+              }
+            : null,
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -384,21 +407,37 @@ exports.completeGoal = async (req, res) => {
       });
     }
 
+    // Check if already completed
+    if (goal.status === 'Completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Goal is already completed',
+      });
+    }
+
     // Mark as completed
     goal.status = 'Completed';
     goal.completedDate = Date.now();
     goal.progress = 100;
     goal.currentValue = goal.targetValue;
 
-    // Award points
-    goal.awardPoints();
+    // Calculate points with bonuses
+    const pointsBreakdown = calculatePointsBreakdown(goal);
+    goal.points = pointsBreakdown.total;
 
     await goal.save();
 
-    // Update user points
+    // Update user points and level
     const user = await User.findById(userId);
-    user.points += goal.points;
-    
+    const previousPoints = user.points || 0;
+    const previousLevel = user.level || 1;
+
+    user.points = previousPoints + goal.points;
+
+    // Calculate new level
+    const newLevel = Math.floor(user.points / 500) + 1;
+    user.level = newLevel;
+
     // Award badge if special milestone
     if (goal.badge) {
       if (!user.badges.includes(goal.badge)) {
@@ -408,13 +447,25 @@ exports.completeGoal = async (req, res) => {
 
     await user.save();
 
+    // Check if leveled up
+    const leveledUp = newLevel > previousLevel;
+
     res.status(200).json({
       success: true,
       message: 'Goal completed! Points awarded.',
       data: {
         goal: goal,
         pointsAwarded: goal.points,
+        previousPoints: previousPoints,
         totalPoints: user.points,
+        pointsBreakdown: pointsBreakdown,
+        levelUp: leveledUp
+          ? {
+              previousLevel,
+              newLevel,
+              message: `🎉 Level Up! You're now Level ${newLevel}!`,
+            }
+          : null,
       },
     });
   } catch (error) {
@@ -426,6 +477,134 @@ exports.completeGoal = async (req, res) => {
     });
   }
 };
+
+// Helper function to calculate points breakdown
+function calculatePointsBreakdown(goal) {
+  const breakdown = {
+    base: 100,
+    earlyCompletion: 0,
+    categoryBonus: 0,
+    progressBonus: 0,
+    commitmentBonus: 0,
+    milestoneBonus: 0,
+    total: 0,
+    details: [],
+  };
+
+  breakdown.details.push({ label: 'Base Points', value: 100 });
+
+  // BONUS 1: Early Completion
+  if (goal.targetDate && goal.completedDate) {
+    const deadline = new Date(goal.targetDate);
+    const completed = new Date(goal.completedDate);
+
+    if (completed < deadline) {
+      const daysEarly = Math.ceil(
+        (deadline - completed) / (1000 * 60 * 60 * 24)
+      );
+
+      if (daysEarly >= 7) {
+        breakdown.earlyCompletion = 50;
+        breakdown.details.push({
+          label: 'Early Completion (1+ week)',
+          value: 50,
+        });
+      } else if (daysEarly >= 3) {
+        breakdown.earlyCompletion = 30;
+        breakdown.details.push({
+          label: 'Early Completion (3-6 days)',
+          value: 30,
+        });
+      } else if (daysEarly >= 1) {
+        breakdown.earlyCompletion = 20;
+        breakdown.details.push({
+          label: 'Early Completion (1-2 days)',
+          value: 20,
+        });
+      }
+    }
+  }
+
+  // BONUS 2: Category Difficulty
+  const categoryBonuses = {
+    'Weight Loss': 50,
+    'Weight Gain': 50,
+    'Muscle Building': 45,
+    'Cardio': 40,
+    'Flexibility': 30,
+    'Sleep': 35,
+    'Nutrition': 30,
+    'Hydration': 25,
+    'Steps': 25,
+    'Stress Management': 40,
+    'General Fitness': 20,
+    'Other': 15,
+  };
+
+  breakdown.categoryBonus = categoryBonuses[goal.category] || 15;
+  breakdown.details.push({
+    label: `${goal.category} Category`,
+    value: breakdown.categoryBonus,
+  });
+
+  // BONUS 3: Progress Achievement
+  const startValue = goal.startingValue || 0;
+  const progressMade = goal.currentValue - startValue;
+  const targetRange = Math.abs(goal.targetValue - startValue);
+
+  if (targetRange > 0) {
+    const progressPercent = (Math.abs(progressMade) / targetRange) * 100;
+    if (progressPercent >= 100) {
+      breakdown.progressBonus = 25;
+      breakdown.details.push({ label: 'Target Achieved', value: 25 });
+    }
+  }
+
+  // BONUS 4: Commitment Duration
+  if (goal.startDate && goal.completedDate) {
+    const duration = Math.ceil(
+      (new Date(goal.completedDate) - new Date(goal.startDate)) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    if (duration >= 60) {
+      breakdown.commitmentBonus = 40;
+      breakdown.details.push({
+        label: 'Long-term Commitment (60+ days)',
+        value: 40,
+      });
+    } else if (duration >= 30) {
+      breakdown.commitmentBonus = 25;
+      breakdown.details.push({ label: 'Commitment (30+ days)', value: 25 });
+    } else if (duration >= 14) {
+      breakdown.commitmentBonus = 15;
+      breakdown.details.push({ label: 'Commitment (14+ days)', value: 15 });
+    }
+  }
+
+  // BONUS 5: Milestones
+  if (goal.milestones && goal.milestones.length > 0) {
+    const achievedMilestones = goal.milestones.filter((m) => m.achieved).length;
+    if (achievedMilestones > 0) {
+      breakdown.milestoneBonus = achievedMilestones * 10;
+      breakdown.details.push({
+        label: `Milestones (${achievedMilestones})`,
+        value: breakdown.milestoneBonus,
+      });
+    }
+  }
+
+  // Calculate total
+  breakdown.total =
+    breakdown.base +
+    breakdown.earlyCompletion +
+    breakdown.categoryBonus +
+    breakdown.progressBonus +
+    breakdown.commitmentBonus +
+    breakdown.milestoneBonus;
+
+  return breakdown;
+}
 
 // @desc    Mark goal as abandoned
 // @route   PUT /api/goals/:id/abandon
@@ -497,8 +676,47 @@ exports.deleteGoal = async (req, res) => {
       });
     }
 
+    // Check if goal was completed and had points
+    const wasCompleted = goal.status === 'Completed';
+    const pointsToDeduct = wasCompleted ? goal.points : 0;
+
+    // Delete the goal
     await goal.deleteOne();
 
+    // If goal was completed, deduct points and recalculate level
+    if (wasCompleted && pointsToDeduct > 0) {
+      const user = await User.findById(userId);
+      const previousPoints = user.points || 0;
+      const previousLevel = user.level || 1;
+
+      // Deduct points (don't go below 0)
+      user.points = Math.max(0, previousPoints - pointsToDeduct);
+
+      // Recalculate level
+      const newLevel = Math.floor(user.points / 500) + 1;
+      user.level = newLevel;
+
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Goal deleted successfully',
+        data: {
+          pointsDeducted: pointsToDeduct,
+          previousPoints: previousPoints,
+          newPoints: user.points,
+          levelChanged: newLevel !== previousLevel,
+          previousLevel: previousLevel,
+          newLevel: newLevel,
+          user: {
+            points: user.points,
+            level: user.level,
+          },
+        },
+      });
+    }
+
+    // If goal wasn't completed, just return success
     res.status(200).json({
       success: true,
       message: 'Goal deleted successfully',
@@ -570,7 +788,11 @@ exports.getGoalStats = async (req, res) => {
 
         // Upcoming deadlines (next 7 days)
         const daysRemaining = goal.getDaysRemaining();
-        if (daysRemaining >= 0 && daysRemaining <= 7 && goal.status !== 'Completed') {
+        if (
+          daysRemaining >= 0 &&
+          daysRemaining <= 7 &&
+          goal.status !== 'Completed'
+        ) {
           stats.upcomingDeadlines.push({
             goalId: goal._id,
             title: goal.title,
@@ -591,12 +813,13 @@ exports.getGoalStats = async (req, res) => {
       });
 
       stats.averageProgress = Math.round(totalProgress / goals.length);
-      stats.completionRate = goals.length > 0 
-        ? Math.round((stats.completed / goals.length) * 100) 
-        : 0;
+      stats.completionRate =
+        goals.length > 0 ? Math.round((stats.completed / goals.length) * 100) : 0;
 
       // Sort upcoming deadlines by days remaining
-      stats.upcomingDeadlines.sort((a, b) => a.daysRemaining - b.daysRemaining);
+      stats.upcomingDeadlines.sort(
+        (a, b) => a.daysRemaining - b.daysRemaining
+      );
     }
 
     res.status(200).json({

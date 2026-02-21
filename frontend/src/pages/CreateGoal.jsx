@@ -232,7 +232,6 @@ const CreateGoal = () => {
                 name="targetDate"
                 value={formData.targetDate}
                 onChange={handleChange}
-                min={new Date().toISOString().split('T')[0]}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                 required
               />
