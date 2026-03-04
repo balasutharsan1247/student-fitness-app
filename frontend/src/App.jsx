@@ -80,6 +80,14 @@ function App() {
               </ProtectedRoute>
               }
           />
+          <Route
+            path="/statistics"
+            element={
+              <ProtectedRoute>
+                <Statistics />
+              </ProtectedRoute>
+            }
+          />
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
 

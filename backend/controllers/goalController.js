@@ -33,7 +33,7 @@ exports.createGoal = async (req, res) => {
       });
     }
 
-   // Create goal
+    // Create goal
     const currentVal = currentValue !== undefined ? currentValue : 0;
 
     const goal = await Goal.create({
@@ -57,6 +57,18 @@ exports.createGoal = async (req, res) => {
     // Calculate initial progress
     goal.calculateProgress();
     await goal.save();
+
+    // Check if auto-completed upon creation (e.g. targetValue = 0)
+    if (goal.status === 'Completed') {
+      const user = await User.findById(userId);
+      user.points = (user.points || 0) + goal.points;
+      user.level = Math.floor(user.points / 500) + 1;
+
+      if (goal.badge && !user.badges.includes(goal.badge)) {
+        user.badges.push(goal.badge);
+      }
+      await user.save();
+    }
 
     res.status(201).json({
       success: true,
@@ -330,11 +342,14 @@ exports.updateProgress = async (req, res) => {
       });
     }
 
+    // Track previous status to prevent double-awarding points
+    const previousStatus = goal.status;
+
     // Recalculate progress
     goal.calculateProgress();
 
-    // Check if auto-completed
-    const wasCompleted = goal.status === 'Completed';
+    // Check if NEWLY auto-completed
+    const wasCompleted = goal.status === 'Completed' && previousStatus !== 'Completed';
 
     await goal.save();
 
@@ -359,10 +374,10 @@ exports.updateProgress = async (req, res) => {
         levelUp:
           newLevel > previousLevel
             ? {
-                previousLevel,
-                newLevel,
-                message: `🎉 Level Up! You're now Level ${newLevel}!`,
-              }
+              previousLevel,
+              newLevel,
+              message: `🎉 Level Up! You're now Level ${newLevel}!`,
+            }
             : null,
       });
     }
@@ -461,10 +476,10 @@ exports.completeGoal = async (req, res) => {
         pointsBreakdown: pointsBreakdown,
         levelUp: leveledUp
           ? {
-              previousLevel,
-              newLevel,
-              message: `🎉 Level Up! You're now Level ${newLevel}!`,
-            }
+            previousLevel,
+            newLevel,
+            message: `🎉 Level Up! You're now Level ${newLevel}!`,
+          }
           : null,
       },
     });
@@ -564,7 +579,7 @@ function calculatePointsBreakdown(goal) {
   if (goal.startDate && goal.completedDate) {
     const duration = Math.ceil(
       (new Date(goal.completedDate) - new Date(goal.startDate)) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
 
     if (duration >= 60) {
@@ -659,6 +674,10 @@ exports.deleteGoal = async (req, res) => {
     const userId = req.user.id;
     const goalId = req.params.id;
 
+    console.log('🗑️ DELETE REQUEST');
+    console.log('User ID:', userId);
+    console.log('Goal ID:', goalId);
+
     const goal = await Goal.findById(goalId);
 
     if (!goal) {
@@ -676,18 +695,30 @@ exports.deleteGoal = async (req, res) => {
       });
     }
 
+    console.log('📊 Goal details:');
+    console.log('Status:', goal.status);
+    console.log('Points:', goal.points);
+
     // Check if goal was completed and had points
     const wasCompleted = goal.status === 'Completed';
     const pointsToDeduct = wasCompleted ? goal.points : 0;
 
-    // Delete the goal
+    console.log('Was completed?', wasCompleted);
+    console.log('Points to deduct:', pointsToDeduct);
+
+    // Delete the goal FIRST
     await goal.deleteOne();
+    console.log('✅ Goal deleted from database');
 
     // If goal was completed, deduct points and recalculate level
     if (wasCompleted && pointsToDeduct > 0) {
       const user = await User.findById(userId);
       const previousPoints = user.points || 0;
       const previousLevel = user.level || 1;
+
+      console.log('👤 User before update:');
+      console.log('Previous points:', previousPoints);
+      console.log('Previous level:', previousLevel);
 
       // Deduct points (don't go below 0)
       user.points = Math.max(0, previousPoints - pointsToDeduct);
@@ -696,7 +727,12 @@ exports.deleteGoal = async (req, res) => {
       const newLevel = Math.floor(user.points / 500) + 1;
       user.level = newLevel;
 
+      console.log('👤 User after calculation:');
+      console.log('New points:', user.points);
+      console.log('New level:', newLevel);
+
       await user.save();
+      console.log('✅ User saved to database');
 
       return res.status(200).json({
         success: true,
@@ -716,6 +752,8 @@ exports.deleteGoal = async (req, res) => {
       });
     }
 
+    console.log('✅ Goal deleted (no points to deduct)');
+
     // If goal wasn't completed, just return success
     res.status(200).json({
       success: true,
@@ -723,7 +761,7 @@ exports.deleteGoal = async (req, res) => {
       data: {},
     });
   } catch (error) {
-    console.error('Delete Goal Error:', error);
+    console.error('❌ Delete Goal Error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while deleting goal',

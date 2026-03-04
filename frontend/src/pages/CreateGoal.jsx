@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { goalService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Target, Save } from 'lucide-react';
 import Layout from '../components/Layout';
 
 const CreateGoal = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -33,50 +36,72 @@ const CreateGoal = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    try {
-      // Validate
-      if (!formData.title || !formData.category || !formData.targetValue || !formData.unit || !formData.targetDate) {
-        setError('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
+  try {
+    // Validate
+    if (!formData.title || !formData.category || !formData.targetValue || !formData.unit || !formData.targetDate) {
+      setError('Please fill in all required fields');
+      setLoading(false);
+      return;
+    }
 
-      // Prepare data
-      const goalData = {
-        title: formData.title,
-        description: formData.description || undefined,
-        category: formData.category,
-        targetValue: parseFloat(formData.targetValue),
-        currentValue: formData.currentValue ? parseFloat(formData.currentValue) : 0,
-        unit: formData.unit,
-        targetDate: formData.targetDate,
-        motivationQuote: formData.motivationQuote || undefined,
-        reminderEnabled: formData.reminderEnabled,
-        reminderFrequency: formData.reminderFrequency,
-      };
+    // Prepare data
+    const goalData = {
+      title: formData.title,
+      description: formData.description || undefined,
+      category: formData.category,
+      targetValue: parseFloat(formData.targetValue),
+      currentValue: formData.currentValue ? parseFloat(formData.currentValue) : 0,
+      unit: formData.unit,
+      targetDate: formData.targetDate,
+      motivationQuote: formData.motivationQuote || undefined,
+      reminderEnabled: formData.reminderEnabled,
+      reminderFrequency: formData.reminderFrequency,
+    };
 
-      const response = await goalService.createGoal(goalData);
+    const response = await goalService.createGoal(goalData);
 
-      if (response.success) {
+    if (response.success) {
+      const createdGoal = response.data;
+      
+      // Check if goal was auto-completed (current = target)
+      if (createdGoal.status === 'Completed' && createdGoal.points > 0) {
+        // Goal auto-completed! Refresh user to get updated points
+        await refreshUser();
+        
+        // Show success message
+        setSuccess(`🎉 Goal auto-completed! You earned ${createdGoal.points} points!`);
+        
+        // Navigate after 2 seconds
+        setTimeout(() => {
+          navigate('/goals');
+        }, 2000);
+      } else {
+        // Regular goal creation - navigate immediately
         navigate('/goals');
       }
-    } catch (err) {
-      console.error('Create goal error:', err);
-      setError(err.response?.data?.message || 'Failed to create goal');
-    } finally {
-      setLoading(false);
     }
-  };
-
+  } catch (err) {
+    console.error('Create goal error:', err);
+    setError(err.response?.data?.message || 'Failed to create goal');
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <Layout>
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {success && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            {success}
+          </div>
+        )}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}

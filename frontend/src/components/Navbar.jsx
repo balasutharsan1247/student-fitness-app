@@ -13,12 +13,22 @@ import {
   X
 } from 'lucide-react';
 import { useState } from 'react';
+import { useEffect } from 'react';
 
 const Navbar = () => {
-  const location = useLocation();
+   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Auto-refresh user data every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshUser();
+    }, 5000); // Every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [refreshUser]);
 
   const handleLogout = () => {
     logout();

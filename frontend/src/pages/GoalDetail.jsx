@@ -23,6 +23,7 @@ const GoalDetail = () => {
   const [goal, setGoal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -192,42 +193,52 @@ const GoalDetail = () => {
   };
 
   // Delete goal
-  // Delete goal
-    const handleDeleteGoal = async () => {
-      if (!window.confirm('Are you sure you want to delete this goal? This action cannot be undone.')) 
-        return;
+      const handleDeleteGoal = async () => {
+        // Prevent double-clicking
+        if (isDeleting) {
+          console.log('⚠️ Already deleting, ignoring duplicate call');
+          return;
+        }
 
-      setUpdating(true);
-      setError('');
+        if (!window.confirm('Are you sure you want to delete this goal? This action cannot be undone.')) 
+          return;
 
-      try {
-        const response = await goalService.deleteGoal(id);
+        setIsDeleting(true);
+        console.log('🗑️ Starting delete process...');
+        
+        setUpdating(true);
+        setError('');
 
-        if (response.success) {
-          // Check if points were deducted
-          if (response.data.pointsDeducted) {
-            // Show message about points deduction
-            const message = `Goal deleted!\n\nPoints deducted: ${response.data.pointsDeducted}\nNew total: ${response.data.newPoints} pts`;
-            
-            if (response.data.levelChanged) {
-              alert(`${message}\n\nLevel changed: ${response.data.previousLevel} → ${response.data.newLevel}`);
-            } else {
-              alert(message);
+        try {
+          const response = await goalService.deleteGoal(id);
+          console.log('✅ Delete response:', response);
+
+          if (response.success) {
+            if (response.data.pointsDeducted) {
+              console.log('💰 Points deducted:', response.data.pointsDeducted);
+              
+              const message = `Goal deleted!\n\nPoints deducted: ${response.data.pointsDeducted}\nNew total: ${response.data.newPoints} pts`;
+              
+              if (response.data.levelChanged) {
+                alert(`${message}\n\nLevel changed: ${response.data.previousLevel} → ${response.data.newLevel}`);
+              } else {
+                alert(message);
+              }
+
+              // Refresh user data
+              await refreshUser();
             }
 
-            // Refresh user data to update navbar and profile
-            await refreshUser();
+            // Navigate
+            navigate('/goals');
           }
-
-          // Navigate back to goals page
-          navigate('/goals');
+        } catch (err) {
+          console.error('❌ Delete goal error:', err);
+          setError(err.response?.data?.message || 'Failed to delete goal');
+          setUpdating(false);
+          setIsDeleting(false);
         }
-      } catch (err) {
-        console.error('Delete goal error:', err);
-        setError(err.response?.data?.message || 'Failed to delete goal');
-        setUpdating(false);
-      }
-    };
+      };
 
   if (loading) {
     return (

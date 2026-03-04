@@ -15,37 +15,36 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is logged in on mount
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const token = authService.getToken();
-      const savedUser = authService.getUser();
-
-      if (token && savedUser) {
-        // Set saved user immediately (fast)
-        setUser(savedUser);
-
-        // Then fetch fresh data from backend (accurate)
-        try {
-          const response = await authService.getCurrentUser();
-          if (response.user) {
-            setUser(response.user);
-            // Update localStorage with fresh data
-            localStorage.setItem('user', JSON.stringify(response.user));
-          }
-        } catch (err) {
-          console.error('Failed to refresh user data:', err);
-          // If token expired or invalid, logout
-          if (err.response?.status === 401) {
-            authService.logout();
-            setUser(null);
-          }
+  // Always fetch fresh user data
+  const fetchUserData = async () => {
+    const token = authService.getToken();
+    
+    if (token) {
+      try {
+        const response = await authService.getCurrentUser();
+        if (response.user) {
+          setUser(response.user);
+          // Update localStorage too
+          localStorage.setItem('user', JSON.stringify(response.user));
+          return response.user;
+        }
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+        if (err.response?.status === 401) {
+          authService.logout();
+          setUser(null);
         }
       }
+    }
+    return null;
+  };
 
+  // On mount, fetch user
+  useEffect(() => {
+    const initializeAuth = async () => {
+      await fetchUserData();
       setLoading(false);
     };
-
     initializeAuth();
   }, []);
 
@@ -89,18 +88,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  // Refresh user from backend
+  // Refresh user from backend - ALWAYS fetch fresh
   const refreshUser = async () => {
-    try {
-      const response = await authService.getCurrentUser();
-      if (response.user) {
-        setUser(response.user);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        return response.user;
-      }
-    } catch (err) {
-      console.error('Failed to refresh user:', err);
-    }
+    console.log('🔄 Refreshing user data from database...');
+    const freshUser = await fetchUserData();
+    console.log('✅ Fresh user data:', freshUser?.points, 'pts');
+    return freshUser;
   };
 
   const value = {
