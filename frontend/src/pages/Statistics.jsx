@@ -36,7 +36,7 @@ const Statistics = () => {
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState('30'); // 7, 30, 90, all
   const [workoutMetric, setWorkoutMetric] = useState('count'); // count, duration, calories
-  const [activityMetrics, setActivityMetrics] = useState(['steps', 'calories', 'sleep']); // Selected metrics to display
+  const [activityMetric, setActivityMetric] = useState('steps'); // Selected metric to display
   const [stats, setStats] = useState({
     overview: {},
     activityTrend: [],
@@ -206,10 +206,10 @@ const Statistics = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading statistics...</p>
+            <p className="mt-4 text-muted-dark">Loading statistics...</p>
           </div>
         </div>
       </Layout>
@@ -218,22 +218,6 @@ const Statistics = () => {
 
   // Colors for charts (different colors for each item)
   const CHART_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
-
-  // Toggle activity metric selection
-const toggleActivityMetric = (metric) => {
-  setActivityMetrics(prev => {
-    if (prev.includes(metric)) {
-      // Remove if already selected (but keep at least one)
-      if (prev.length > 1) {
-        return prev.filter(m => m !== metric);
-      }
-      return prev; // Don't remove if it's the last one
-    } else {
-      // Add if not selected
-      return [...prev, metric];
-    }
-  });
-};
 
 // Get color for activity metric
 const getActivityMetricColor = (metric) => {
@@ -263,24 +247,24 @@ const getActivityMetricName = (metric) => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Statistics & Analytics</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-dark">Statistics & Analytics</h1>
+              <p className="text-muted-dark mt-1">
                 Detailed insights into your fitness journey
               </p>
             </div>
 
             {/* Time Period Selector */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Period:</label>
+              <label className="text-sm font-medium text-dark">Period:</label>
               <select
                 value={timePeriod}
                 onChange={(e) => setTimePeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                className="px-4 py-2 border border-dark select-dark rounded-lg outline-none"
               >
                 <option value="7">Last 7 Days</option>
                 <option value="30">Last 30 Days</option>
@@ -292,73 +276,66 @@ const getActivityMetricName = (metric) => {
 
           {/* Overview Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
                 <Activity className="w-8 h-8 text-blue-500" />
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-dark">
                   {stats.overview.totalLogs}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm font-medium">Total Activities Logged</p>
+              <p className="text-muted-dark text-sm font-medium">Total Activities Logged</p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
                 <Footprints className="w-8 h-8 text-green-500" />
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-dark">
                   {stats.overview.totalSteps.toLocaleString()}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm font-medium">Total Steps</p>
+              <p className="text-muted-dark text-sm font-medium">Total Steps</p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
                 <Target className="w-8 h-8 text-purple-500" />
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-dark">
                   {stats.goalStats?.completed || 0}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm font-medium">Goals Completed</p>
+              <p className="text-muted-dark text-sm font-medium">Goals Completed</p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
                 <Award className="w-8 h-8 text-yellow-500" />
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-dark">
                   {user?.points || 0}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm font-medium">Total Points Earned</p>
+              <p className="text-muted-dark text-sm font-medium">Total Points Earned</p>
             </div>
           </div>
 
           {/* Activity Trends Chart with Metric Selection */}
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="card-dark rounded-xl shadow-dark p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-dark">
                 Activity Trends
               </h3>
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">Show:</span>
-                <div className="flex flex-wrap gap-2">
+                <span className="text-sm font-medium text-dark">Show:</span>
+                <select
+                  value={activityMetric}
+                  onChange={(e) => setActivityMetric(e.target.value)}
+                  className="px-4 py-2 text-sm border border-dark select-dark rounded-lg outline-none bg-white dark:bg-dark-card"
+                >
                   {['steps', 'calories', 'sleep', 'water', 'activeMinutes', 'distance'].map(metric => (
-                    <button
-                      key={metric}
-                      onClick={() => toggleActivityMetric(metric)}
-                      className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                        activityMetrics.includes(metric)
-                          ? 'text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      style={{
-                        backgroundColor: activityMetrics.includes(metric) ? getActivityMetricColor(metric) : undefined,
-                      }}
-                    >
+                    <option key={metric} value={metric}>
                       {getActivityMetricName(metric)}
-                    </button>
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
             {stats.activityTrend.length > 0 ? (
@@ -375,80 +352,28 @@ const getActivityMetricName = (metric) => {
                     }}
                   />
                   <Legend />
-                  {activityMetrics.includes('steps') && (
-                    <Line
-                      type="monotone"
-                      dataKey="steps"
-                      stroke={getActivityMetricColor('steps')}
-                      strokeWidth={2}
-                      name={getActivityMetricName('steps')}
-                      dot={{ fill: getActivityMetricColor('steps'), r: 4 }}
-                    />
-                  )}
-                  {activityMetrics.includes('calories') && (
-                    <Line
-                      type="monotone"
-                      dataKey="calories"
-                      stroke={getActivityMetricColor('calories')}
-                      strokeWidth={2}
-                      name={getActivityMetricName('calories')}
-                      dot={{ fill: getActivityMetricColor('calories'), r: 4 }}
-                    />
-                  )}
-                  {activityMetrics.includes('sleep') && (
-                    <Line
-                      type="monotone"
-                      dataKey="sleep"
-                      stroke={getActivityMetricColor('sleep')}
-                      strokeWidth={2}
-                      name={getActivityMetricName('sleep')}
-                      dot={{ fill: getActivityMetricColor('sleep'), r: 4 }}
-                    />
-                  )}
-                  {activityMetrics.includes('water') && (
-                    <Line
-                      type="monotone"
-                      dataKey="water"
-                      stroke={getActivityMetricColor('water')}
-                      strokeWidth={2}
-                      name={getActivityMetricName('water')}
-                      dot={{ fill: getActivityMetricColor('water'), r: 4 }}
-                    />
-                  )}
-                  {activityMetrics.includes('activeMinutes') && (
-                    <Line
-                      type="monotone"
-                      dataKey="activeMinutes"
-                      stroke={getActivityMetricColor('activeMinutes')}
-                      strokeWidth={2}
-                      name={getActivityMetricName('activeMinutes')}
-                      dot={{ fill: getActivityMetricColor('activeMinutes'), r: 4 }}
-                    />
-                  )}
-                  {activityMetrics.includes('distance') && (
-                    <Line
-                      type="monotone"
-                      dataKey="distance"
-                      stroke={getActivityMetricColor('distance')}
-                      strokeWidth={2}
-                      name={getActivityMetricName('distance')}
-                      dot={{ fill: getActivityMetricColor('distance'), r: 4 }}
-                    />
-                  )}
+                  <Line
+                    type="monotone"
+                    dataKey={activityMetric}
+                    stroke={getActivityMetricColor(activityMetric)}
+                    strokeWidth={2}
+                    name={getActivityMetricName(activityMetric)}
+                    dot={{ fill: getActivityMetricColor(activityMetric), r: 4 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-64 flex items-center justify-center">
-                <p className="text-gray-500">No activity data available</p>
+                <p className="text-muted-dark">No activity data available</p>
               </div>
             )}
           </div>
 
           {/* Lifestyle Score Trend */}
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+          <div className="card-dark rounded-xl shadow-dark p-6 mb-8">
+            <h3 className="text-lg font-semibold text-dark mb-6">
               Lifestyle Score Timeline
-              <span className="ml-3 text-sm font-normal text-gray-600">
+              <span className="ml-3 text-sm font-normal text-muted-dark">
                 Average: {stats.overview.averageLifestyleScore}/100
               </span>
             </h3>
@@ -477,7 +402,7 @@ const getActivityMetricName = (metric) => {
               </ResponsiveContainer>
             ) : (
               <div className="h-64 flex items-center justify-center">
-                <p className="text-gray-500">No lifestyle score data available</p>
+                <p className="text-muted-dark">No lifestyle score data available</p>
               </div>
             )}
           </div>
@@ -485,16 +410,16 @@ const getActivityMetricName = (metric) => {
           {/* Two Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Workout Types Breakdown with Dropdown */}
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <h3 className="text-lg font-semibold text-dark flex items-center">
                   <Dumbbell className="w-5 h-5 mr-2 text-orange-500" />
                   Workout Analysis
                 </h3>
                 <select
                   value={workoutMetric}
                   onChange={(e) => setWorkoutMetric(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                  className="px-3 py-1.5 text-sm border border-dark select-dark rounded-lg outline-none"
                 >
                   <option value="count">Count</option>
                   <option value="duration">Time Spent (min)</option>
@@ -544,14 +469,14 @@ const getActivityMetricName = (metric) => {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-64 flex items-center justify-center">
-                  <p className="text-gray-500">No workout data available</p>
+                  <p className="text-muted-dark">No workout data available</p>
                 </div>
               )}
             </div>
 
             {/* Goal Categories Breakdown */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <h3 className="text-lg font-semibold text-dark mb-6 flex items-center">
                 <Target className="w-5 h-5 mr-2 text-purple-500" />
                 Goal Categories
               </h3>
@@ -577,7 +502,7 @@ const getActivityMetricName = (metric) => {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-64 flex items-center justify-center">
-                  <p className="text-gray-500">No goal data available</p>
+                  <p className="text-muted-dark">No goal data available</p>
                 </div>
               )}
             </div>
@@ -586,27 +511,27 @@ const getActivityMetricName = (metric) => {
           {/* Additional Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {/* Nutrition Summary */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <h3 className="text-lg font-semibold text-dark mb-4 flex items-center">
                 <UtensilsCrossed className="w-5 h-5 mr-2 text-green-500" />
                 Nutrition
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Total Consumed</span>
-                  <span className="font-bold text-gray-900">
+                  <span className="text-sm text-muted-dark">Total Consumed</span>
+                  <span className="font-bold text-dark">
                     {stats.nutritionSummary.totalConsumed?.toLocaleString()} kcal
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Total Burned</span>
-                  <span className="font-bold text-gray-900">
+                  <span className="text-sm text-muted-dark">Total Burned</span>
+                  <span className="font-bold text-dark">
                     {stats.nutritionSummary.totalBurned?.toLocaleString()} kcal
                   </span>
                 </div>
-                <div className="pt-3 border-t border-gray-200">
+                <div className="pt-3 border-t border-dark">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Net Calories</span>
+                    <span className="text-sm text-muted-dark">Net Calories</span>
                     <span
                       className={`font-bold ${
                         stats.nutritionSummary.netCalories > 0
@@ -623,44 +548,44 @@ const getActivityMetricName = (metric) => {
             </div>
 
             {/* Sleep Summary */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <h3 className="text-lg font-semibold text-dark mb-4 flex items-center">
                 <Moon className="w-5 h-5 mr-2 text-indigo-500" />
                 Sleep
               </h3>
               <div className="space-y-3">
                 <div className="text-center">
-                  <p className="text-4xl font-bold text-gray-900">
+                  <p className="text-4xl font-bold text-dark">
                     {stats.overview.averageSleep}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">Average hours/night</p>
+                  <p className="text-sm text-muted-dark mt-1">Average hours/night</p>
                 </div>
-                <div className="pt-3 border-t border-gray-200">
+                <div className="pt-3 border-t border-dark">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Recommended</span>
-                    <span className="font-semibold text-gray-900">7-9 hours</span>
+                    <span className="text-sm text-muted-dark">Recommended</span>
+                    <span className="font-semibold text-dark">7-9 hours</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Hydration Summary */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <h3 className="text-lg font-semibold text-dark mb-4 flex items-center">
                 <Droplets className="w-5 h-5 mr-2 text-cyan-500" />
                 Hydration
               </h3>
               <div className="space-y-3">
                 <div className="text-center">
-                  <p className="text-4xl font-bold text-gray-900">
+                  <p className="text-4xl font-bold text-dark">
                     {stats.overview.averageWater}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">Average liters/day</p>
+                  <p className="text-sm text-muted-dark mt-1">Average liters/day</p>
                 </div>
-                <div className="pt-3 border-t border-gray-200">
+                <div className="pt-3 border-t border-dark">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Daily Goal</span>
-                    <span className="font-semibold text-gray-900">2-3 liters</span>
+                    <span className="text-sm text-muted-dark">Daily Goal</span>
+                    <span className="font-semibold text-dark">2-3 liters</span>
                   </div>
                 </div>
               </div>
@@ -668,40 +593,40 @@ const getActivityMetricName = (metric) => {
           </div>
 
           {/* Goal Statistics */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
+            <h3 className="text-lg font-semibold text-dark mb-6">
               Goal Performance
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
               <div className="text-center">
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-3xl font-bold text-dark">
                   {stats.goalStats?.total || 0}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">Total Goals</p>
+                <p className="text-sm text-muted-dark mt-1">Total Goals</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-blue-600">
                   {stats.goalStats?.active || 0}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">Active</p>
+                <p className="text-sm text-muted-dark mt-1">Active</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-green-600">
                   {stats.goalStats?.completed || 0}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">Completed</p>
+                <p className="text-sm text-muted-dark mt-1">Completed</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-red-600">
                   {stats.goalStats?.abandoned || 0}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">Abandoned</p>
+                <p className="text-sm text-muted-dark mt-1">Abandoned</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-purple-600">
                   {stats.goalStats?.completionRate || 0}%
                 </p>
-                <p className="text-sm text-gray-600 mt-1">Success Rate</p>
+                <p className="text-sm text-muted-dark mt-1">Success Rate</p>
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // ✅ Enable dark mode with class strategy
   theme: {
     extend: {
       colors: {
@@ -19,6 +20,15 @@ export default {
           800: '#075985',
           900: '#0c4a6e',
         },
+        // ✅ Dark mode color palette
+        dark: {
+          bg: '#0f172a',      // Main background (slate-900)
+          card: '#1e293b',    // Card background (slate-800)
+          hover: '#334155',   // Hover states (slate-700)
+          border: '#475569',  // Borders (slate-600)
+          text: '#e2e8f0',    // Primary text (slate-200)
+          muted: '#94a3b8',   // Secondary text (slate-400)
+        }
       },
     },
   },

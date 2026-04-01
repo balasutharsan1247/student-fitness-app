@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fitnessService } from '../services/api';
 import Layout from '../components/Layout';
+import GoogleFitConnect from '../components/GoogleFitConnect';
+
 import { 
   Activity, 
   ArrowLeft, 
@@ -235,38 +237,50 @@ const LogActivity = () => {
 
   return (
     <Layout>
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg">
             ✅ Activity logged successfully! Redirecting to dashboard...
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
+        <GoogleFitConnect
+            onDataFetched={(data) => {
+              setFormData(prev => ({
+              ...prev,
+              steps: data.steps,
+              caloriesBurned: data.calories,
+              distance: data.distance,
+              activeMinutes: data.activeMinutes || prev.activeMinutes
+            }));
+            }}
+        />
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Physical Activity Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-blue-500 rounded-lg">
                 <Footprints className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-dark">
                 Physical Activity
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Steps
                 </label>
                 <input
@@ -276,12 +290,12 @@ const LogActivity = () => {
                   onChange={handleChange}
                   placeholder="10000"
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Distance (km)
                 </label>
                 <input
@@ -292,12 +306,12 @@ const LogActivity = () => {
                   placeholder="5.5"
                   min="0"
                   step="0.1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Active Minutes
                 </label>
                 <input
@@ -307,12 +321,12 @@ const LogActivity = () => {
                   onChange={handleChange}
                   placeholder="30"
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Calories Burned
                 </label>
                 <input
@@ -322,19 +336,19 @@ const LogActivity = () => {
                   onChange={handleChange}
                   placeholder="300"
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Workouts Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-orange-500 rounded-lg">
                 <Dumbbell className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Workouts</h2>
+              <h2 className="text-xl font-bold text-dark">Workouts</h2>
             </div>
 
             {/* Existing workouts */}
@@ -343,13 +357,13 @@ const LogActivity = () => {
                 {workouts.map((workout, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-hover rounded-lg border border-dark"
                   >
                     <div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-dark">
                         {workout.type}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-dark">
                         {workout.duration} min • {workout.intensity}
                         {workout.caloriesBurned && ` • ${workout.caloriesBurned} cal`}
                       </p>
@@ -367,11 +381,11 @@ const LogActivity = () => {
             )}
 
             {/* Add new workout */}
-            <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="font-medium text-gray-900">Add Workout</p>
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="font-medium text-dark">Add Workout</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Type *
                   </label>
                   <select
@@ -379,7 +393,7 @@ const LogActivity = () => {
                     onChange={(e) =>
                       setCurrentWorkout({ ...currentWorkout, type: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Type</option>
                     <option value="Running">Running</option>
@@ -395,7 +409,7 @@ const LogActivity = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Duration (minutes) *
                   </label>
                   <input
@@ -406,12 +420,12 @@ const LogActivity = () => {
                     }
                     placeholder="30"
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Intensity
                   </label>
                   <select
@@ -419,7 +433,7 @@ const LogActivity = () => {
                     onChange={(e) =>
                       setCurrentWorkout({ ...currentWorkout, intensity: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="Low">Low</option>
                     <option value="Moderate">Moderate</option>
@@ -428,7 +442,7 @@ const LogActivity = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Calories Burned
                   </label>
                   <input
@@ -442,12 +456,12 @@ const LogActivity = () => {
                     }
                     placeholder="200"
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Notes
                   </label>
                   <input
@@ -457,7 +471,7 @@ const LogActivity = () => {
                       setCurrentWorkout({ ...currentWorkout, notes: e.target.value })
                     }
                     placeholder="Morning jog around campus"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
               </div>
@@ -465,7 +479,7 @@ const LogActivity = () => {
               <button
                 type="button"
                 onClick={addWorkout}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition"
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg transition"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Workout</span>
@@ -474,32 +488,32 @@ const LogActivity = () => {
           </div>
 
           {/* Meals Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-green-500 rounded-lg">
                 <UtensilsCrossed className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Meals & Nutrition</h2>
+              <h2 className="text-xl font-bold text-dark">Meals & Nutrition</h2>
             </div>
 
             {/* Existing meals */}
             {meals.length > 0 && (
               <div className="mb-6 space-y-3">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-dark">
                     Total Calories: <span className="font-bold text-green-600">{totalCaloriesConsumed} kcal</span>
                   </p>
                 </div>
                 {meals.map((meal, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-hover rounded-lg border border-dark"
                   >
                     <div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-dark">
                         {meal.mealType}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-dark">
                         {meal.description}
                         {meal.calories && ` • ${meal.calories} cal`}
                         {meal.location && ` • ${meal.location}`}
@@ -518,11 +532,11 @@ const LogActivity = () => {
             )}
 
             {/* Add new meal */}
-            <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="font-medium text-gray-900">Add Meal</p>
+            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <p className="font-medium text-dark">Add Meal</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Meal Type *
                   </label>
                   <select
@@ -530,7 +544,7 @@ const LogActivity = () => {
                     onChange={(e) =>
                       setCurrentMeal({ ...currentMeal, mealType: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Type</option>
                     <option value="Breakfast">Breakfast</option>
@@ -541,7 +555,7 @@ const LogActivity = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Calories
                   </label>
                   <input
@@ -552,12 +566,12 @@ const LogActivity = () => {
                     }
                     placeholder="500"
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Description *
                   </label>
                   <input
@@ -567,12 +581,12 @@ const LogActivity = () => {
                       setCurrentMeal({ ...currentMeal, description: e.target.value })
                     }
                     placeholder="Oatmeal with fruits and coffee"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Location
                   </label>
                   <input
@@ -582,12 +596,12 @@ const LogActivity = () => {
                       setCurrentMeal({ ...currentMeal, location: e.target.value })
                     }
                     placeholder="Campus Cafeteria"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Health Rating (1-5)
                   </label>
                   <select
@@ -595,7 +609,7 @@ const LogActivity = () => {
                     onChange={(e) =>
                       setCurrentMeal({ ...currentMeal, healthRating: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Rating</option>
                     <option value="1">1 - Not Healthy</option>
@@ -610,7 +624,7 @@ const LogActivity = () => {
               <button
                 type="button"
                 onClick={addMeal}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition"
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Meal</span>
@@ -619,17 +633,17 @@ const LogActivity = () => {
           </div>
 
           {/* Sleep Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-indigo-500 rounded-lg">
                 <Moon className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Sleep</h2>
+              <h2 className="text-xl font-bold text-dark">Sleep</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Sleep Hours
                 </label>
                 <input
@@ -641,19 +655,19 @@ const LogActivity = () => {
                   min="0"
                   max="24"
                   step="0.5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Sleep Quality
                 </label>
                 <select
                   name="quality"
                   value={sleep.quality}
                   onChange={handleSleepChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 >
                   <option value="">Select Quality</option>
                   <option value="Poor">Poor</option>
@@ -666,17 +680,17 @@ const LogActivity = () => {
           </div>
 
           {/* Lifestyle Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-cyan-500 rounded-lg">
                 <Droplets className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Lifestyle & Wellness</h2>
+              <h2 className="text-xl font-bold text-dark">Lifestyle & Wellness</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Water Intake (liters)
                 </label>
                 <input
@@ -687,12 +701,12 @@ const LogActivity = () => {
                   placeholder="2.5"
                   min="0"
                   step="0.1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Screen Time (hours)
                 </label>
                 <input
@@ -703,12 +717,12 @@ const LogActivity = () => {
                   placeholder="5"
                   min="0"
                   step="0.5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Stress Level (1-10)
                 </label>
                 <input
@@ -719,22 +733,22 @@ const LogActivity = () => {
                   placeholder="5"
                   min="1"
                   max="10"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-dark mt-1">
                   1 = Very Relaxed, 10 = Extremely Stressed
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Mood
                 </label>
                 <select
                   name="mood"
                   value={formData.mood}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 >
                   <option value="">Select Mood</option>
                   <option value="Very Bad">😞 Very Bad</option>
@@ -746,7 +760,7 @@ const LogActivity = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark mb-2">
                   Weight (kg)
                 </label>
                 <input
@@ -757,19 +771,19 @@ const LogActivity = () => {
                   placeholder="70"
                   min="0"
                   step="0.1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Notes Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="card-dark rounded-xl shadow-dark p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 bg-purple-500 rounded-lg">
                 <Activity className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Additional Notes</h2>
+              <h2 className="text-xl font-bold text-dark">Additional Notes</h2>
             </div>
 
             <textarea
@@ -778,7 +792,7 @@ const LogActivity = () => {
               onChange={handleChange}
               placeholder="How did you feel today? Any achievements or challenges?"
               rows="4"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+              className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none resize-none"
             />
           </div>
 
@@ -786,14 +800,14 @@ const LogActivity = () => {
           <div className="flex items-center justify-end space-x-4">
             <Link
               to="/dashboard"
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold"
+              className="px-6 py-3 border border-dark text-dark rounded-lg hover:bg-gray-50 dark:hover:bg-dark-hover transition font-semibold"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center space-x-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-5 h-5" />
               <span>{loading ? 'Saving...' : 'Save Activity Log'}</span>

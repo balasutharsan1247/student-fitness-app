@@ -223,4 +223,13 @@ export const goalService = {
   },
 };
 
+const getBaseURL = () => {
+  const hostname = window.location.hostname;
+  // If accessing via sslip.io, point the API to the same IP at port 5000
+  if (hostname.includes('sslip.io')) {
+    return `http://${hostname.replace(':5173', '')}:5000/api`;
+  }
+  return 'http://localhost:5000/api';
+};
+
 export default api;

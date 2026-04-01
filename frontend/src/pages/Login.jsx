@@ -46,7 +46,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-dark-bg dark:via-dark-bg dark:to-dark-bg flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -54,17 +54,17 @@ const Login = () => {
               <Activity className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-dark mb-2">
             Welcome Back!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-dark">
             Sign in to track your fitness journey
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="card-dark rounded-2xl shadow-dark p-8">
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
               <p className="text-sm">{error}</p>
             </div>
           )}
@@ -73,7 +73,7 @@ const Login = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-dark mb-2"
               >
                 Email Address
               </label>
@@ -84,7 +84,7 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="john.doe@university.edu"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none transition"
                 required
               />
             </div>
@@ -92,7 +92,7 @@ const Login = () => {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-dark mb-2"
               >
                 Password
               </label>
@@ -103,7 +103,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none transition"
                 required
               />
             </div>
@@ -117,14 +117,14 @@ const Login = () => {
                 />
                 <label
                   htmlFor="remember"
-                  className="ml-2 block text-sm text-gray-700"
+                  className="ml-2 block text-sm text-dark"
                 >
                   Remember me
                 </label>
               </div>
               <button
                 type="button"
-                className="text-sm text-primary-600 hover:text-primary-500"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500"
               >
                 Forgot password?
               </button>
@@ -133,7 +133,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary-dark font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -142,10 +142,10 @@ const Login = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-dark"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+                <span className="px-2 bg-white dark:bg-dark-card text-muted-dark">
                   Don't have an account?
                 </span>
               </div>
@@ -155,14 +155,14 @@ const Login = () => {
           <div className="mt-6 text-center">
             <Link
               to="/register"
-              className="text-primary-600 hover:text-primary-500 font-medium"
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium"
             >
               Create a new account →
             </Link>
           </div>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-8">
+        <p className="text-center text-sm text-muted-dark mt-8">
           By signing in, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>

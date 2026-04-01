@@ -22,8 +22,8 @@ const LifestyleScoreCard = ({ score }) => {
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+    <div className="card-dark rounded-xl shadow-dark p-6">
+      <h3 className="text-lg font-semibold text-dark mb-6">
         Today's Lifestyle Score
       </h3>
       
@@ -36,7 +36,8 @@ const LifestyleScoreCard = ({ score }) => {
               cx="96"
               cy="96"
               r="70"
-              stroke="#e5e7eb"
+              stroke="currentColor"
+              className="text-gray-200 dark:text-dark-border"
               strokeWidth="12"
               fill="transparent"
             />
@@ -60,7 +61,7 @@ const LifestyleScoreCard = ({ score }) => {
             <span className={`text-5xl font-bold ${scoreColor}`}>
               {score}
             </span>
-            <span className="text-gray-500 text-sm mt-1">out of 100</span>
+            <span className="text-muted-dark text-sm mt-1">out of 100</span>
           </div>
         </div>
 
@@ -69,7 +70,7 @@ const LifestyleScoreCard = ({ score }) => {
           <p className={`text-xl font-semibold ${scoreColor}`}>
             {scoreLabel}
           </p>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-dark mt-1">
             Keep up the great work! 💪
           </p>
         </div>

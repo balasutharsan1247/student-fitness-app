@@ -11,7 +11,15 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors()); // Allow frontend to talk to backend
+app.use(cors(
+  {
+    origin: [
+    'http://localhost:5173',
+    'http://10.240.145.23.sslip.io:5173' 
+  ],
+  credentials: true
+  }
+)); // Allow frontend to talk to backend
 app.use(express.json()); // Allow server to read JSON data
 app.use(express.urlencoded({ extended: true })); // Allow server to read form data
 
@@ -71,7 +79,7 @@ connectDB();
 const PORT = process.env.PORT || 5000;
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0',() => {
   console.log('🚀 Server is running!');
   console.log(`📡 Server URL: http://localhost:${PORT}`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);

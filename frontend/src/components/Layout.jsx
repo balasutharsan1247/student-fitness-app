@@ -12,12 +12,12 @@ const Layout = ({ children }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
       {/* Navbar */}
       <Navbar />
 
       {/* Main Content */}
-      <main className="lg:pl-64">
+      <main className="lg:pl-64 transition-colors duration-200">
         {children}
       </main>
     </div>

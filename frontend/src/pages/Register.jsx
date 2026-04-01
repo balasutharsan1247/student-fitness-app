@@ -81,7 +81,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-dark-bg dark:via-dark-bg dark:to-dark-bg flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full">
         {/* Logo and Header */}
         <div className="text-center mb-8">
@@ -90,19 +90,19 @@ const Register = () => {
               <Activity className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-dark mb-2">
             Create Your Account
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-dark">
             Start your fitness journey today
           </p>
         </div>
 
         {/* Register Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="card-dark rounded-2xl shadow-dark p-8">
           {/* Error Message */}
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
               <p className="text-sm">{error}</p>
             </div>
           )}
@@ -111,13 +111,13 @@ const Register = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-dark mb-4">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* First Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     First Name *
                   </label>
                   <input
@@ -126,14 +126,14 @@ const Register = () => {
                     value={formData.firstName}
                     onChange={handleChange}
                     placeholder="John"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
                 </div>
 
                 {/* Last Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Last Name *
                   </label>
                   <input
@@ -142,14 +142,14 @@ const Register = () => {
                     value={formData.lastName}
                     onChange={handleChange}
                     placeholder="Doe"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Email Address *
                   </label>
                   <input
@@ -158,14 +158,14 @@ const Register = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="john.doe@university.edu"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
                 </div>
 
                 {/* Student ID */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Student ID *
                   </label>
                   <input
@@ -174,7 +174,7 @@ const Register = () => {
                     value={formData.studentId}
                     onChange={handleChange}
                     placeholder="STU2024001"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
                 </div>
@@ -183,14 +183,14 @@ const Register = () => {
 
             {/* Academic Information Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-dark mb-4">
                 Academic Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* University */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     University *
                   </label>
                   <input
@@ -199,14 +199,14 @@ const Register = () => {
                     value={formData.university}
                     onChange={handleChange}
                     placeholder="Tech University"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
                 </div>
 
                 {/* Department */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Department
                   </label>
                   <input
@@ -215,20 +215,20 @@ const Register = () => {
                     value={formData.department}
                     onChange={handleChange}
                     placeholder="Computer Science"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 {/* Graduate Type (NEW) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Graduate Type
                   </label>
                   <select
                     name="graduateType"
                     value={formData.graduateType}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Type</option>
                     <option value="Under-graduate">Under-graduate</option>
@@ -238,14 +238,14 @@ const Register = () => {
 
                 {/* Year (Updated values) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Year
                   </label>
                   <select
                     name="year"
                     value={formData.year}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Year</option>
                     <option value="I">I</option>
@@ -257,7 +257,7 @@ const Register = () => {
 
                 {/* Date of Birth (NEW) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Date of Birth
                   </label>
                   <input
@@ -266,13 +266,13 @@ const Register = () => {
                     value={formData.dateOfBirth}
                     onChange={handleChange}
                     max={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 {/* Age */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Age
                   </label>
                   <input
@@ -283,20 +283,20 @@ const Register = () => {
                     placeholder="21"
                     min="16"
                     max="100"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
                 {/* Gender */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Gender
                   </label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
@@ -311,13 +311,13 @@ const Register = () => {
 
             {/* Security Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-dark mb-4">
                 Security
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Password *
                   </label>
                   <input
@@ -326,17 +326,17 @@ const Register = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-dark mt-1">
                     At least 6 characters
                   </p>
                 </div>
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark mb-2">
                     Confirm Password *
                   </label>
                   <input
@@ -345,7 +345,7 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-dark input-dark rounded-lg outline-none"
                     required
                   />
                 </div>
@@ -356,7 +356,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary-dark font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
@@ -366,10 +366,10 @@ const Register = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-dark"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+                <span className="px-2 bg-white dark:bg-dark-card text-muted-dark">
                   Already have an account?
                 </span>
               </div>
@@ -380,7 +380,7 @@ const Register = () => {
           <div className="mt-6 text-center">
             <Link
               to="/login"
-              className="text-primary-600 hover:text-primary-500 font-medium"
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium"
             >
               Sign in instead →
             </Link>

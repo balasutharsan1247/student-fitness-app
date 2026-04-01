@@ -70,10 +70,10 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 dark:border-primary-400 mx-auto"></div>
+          <p className="mt-4 text-muted-dark">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -83,152 +83,152 @@ const Dashboard = () => {
   const weekData = dashboardData?.weekSummary;
 
   return (
-  <Layout>
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* Welcome Message */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Dashboard Overview
-          </h2>
-          <p className="text-gray-600">
-            Track your fitness journey and achieve your goals! 🎯
-          </p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Link
-            to="/log-activity"
-            className="flex items-center justify-center space-x-3 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-xl transition shadow-md"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="font-semibold">Log Today's Activity</span>
-          </Link>
-          <Link
-            to="/goals/create"
-            className="flex items-center justify-center space-x-3 bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition shadow-md"
-          >
-            <Target className="w-5 h-5" />
-            <span className="font-semibold">Create New Goal</span>
-          </Link>
-          <Link
-            to="/statistics"
-            className="flex items-center justify-center space-x-3 bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition shadow-md"
-          >
-            <TrendingUp className="w-5 h-5" />
-            <span className="font-semibold">View Statistics</span>
-          </Link>
-        </div>
-
-        {todayData ? (
-          <>
-            {/* Today's Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatCard
-                icon={Footprints}
-                label="Steps Today"
-                value={todayData.steps || 0}
-                target={todayData.stepsGoal || 10000}
-                progress={todayData.stepsProgress || 0}
-                color="bg-blue-500"
-              />
-              <StatCard
-                icon={Flame}
-                label="Calories Burned"
-                value={todayData.caloriesBurned || 0}
-                unit="kcal"
-                color="bg-orange-500"
-              />
-              <StatCard
-                icon={Moon}
-                label="Sleep Hours"
-                value={todayData.sleepHours || 0}
-                unit="hours"
-                target={user?.targetSleep || 8}
-                color="bg-indigo-500"
-              />
-              <StatCard
-                icon={Droplets}
-                label="Water Intake"
-                value={todayData.waterIntake || 0}
-                unit="liters"
-                target={2}
-                color="bg-cyan-500"
-              />
+    <Layout>
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && (
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+              {error}
             </div>
+          )}
 
-            {/* Lifestyle Score and Weekly Chart */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <div className="lg:col-span-1">
-                <LifestyleScoreCard score={todayData.lifestyleScore || 0} />
-              </div>
-              <div className="lg:col-span-2">
-                <WeeklyChart data={weekData?.trend || []} />
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-8 mb-8 text-center">
-            <Activity className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No Activity Logged Yet
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Start tracking your fitness journey today!
+          {/* Welcome Message */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-dark mb-2">
+              Dashboard Overview
+            </h2>
+            <p className="text-muted-dark">
+              Track your fitness journey and achieve your goals! 🎯
             </p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Link
               to="/log-activity"
-              className="inline-block bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition"
+              className="flex items-center justify-center space-x-3 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white p-4 rounded-xl transition-colors duration-200 shadow-md dark:shadow-lg"
             >
-              Log Your First Activity
+              <Plus className="w-5 h-5" />
+              <span className="font-semibold">Log Today's Activity</span>
             </Link>
-          </div>
-        )}
-
-        {/* Active Goals */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Active Goals ({activeGoals.length})
-            </h3>
             <Link
-              to="/goals"
-              className="text-primary-600 hover:text-primary-700 font-medium text-sm"
+              to="/goals/create"
+              className="flex items-center justify-center space-x-3 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white p-4 rounded-xl transition-colors duration-200 shadow-md dark:shadow-lg"
             >
-              View All →
+              <Target className="w-5 h-5" />
+              <span className="font-semibold">Create New Goal</span>
+            </Link>
+            <Link
+              to="/statistics"
+              className="flex items-center justify-center space-x-3 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white p-4 rounded-xl transition-colors duration-200 shadow-md dark:shadow-lg"
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span className="font-semibold">View Statistics</span>
             </Link>
           </div>
 
-          {activeGoals.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeGoals.slice(0, 6).map((goal) => (
-                <GoalCard key={goal._id} goal={goal} />
-              ))}
-            </div>
+          {todayData ? (
+            <>
+              {/* Today's Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatCard
+                  icon={Footprints}
+                  label="Steps Today"
+                  value={todayData.steps || 0}
+                  target={todayData.stepsGoal || 10000}
+                  progress={todayData.stepsProgress || 0}
+                  color="bg-blue-500 dark:bg-blue-600"
+                />
+                <StatCard
+                  icon={Flame}
+                  label="Calories Burned"
+                  value={todayData.caloriesBurned || 0}
+                  unit="kcal"
+                  color="bg-orange-500 dark:bg-orange-600"
+                />
+                <StatCard
+                  icon={Moon}
+                  label="Sleep Hours"
+                  value={todayData.sleepHours || 0}
+                  unit="hours"
+                  target={user?.targetSleep || 8}
+                  color="bg-indigo-500 dark:bg-indigo-600"
+                />
+                <StatCard
+                  icon={Droplets}
+                  label="Water Intake"
+                  value={todayData.waterIntake || 0}
+                  unit="liters"
+                  target={2}
+                  color="bg-cyan-500 dark:bg-cyan-600"
+                />
+              </div>
+
+              {/* Lifestyle Score and Weekly Chart */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div className="lg:col-span-1">
+                  <LifestyleScoreCard score={todayData.lifestyleScore || 0} />
+                </div>
+                <div className="lg:col-span-2">
+                  <WeeklyChart data={weekData?.trend || []} />
+                </div>
+              </div>
+            </>
           ) : (
-            <div className="text-center py-8">
-              <Target className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 mb-4">No active goals yet</p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-8 mb-8 text-center">
+              <Activity className="w-16 h-16 text-blue-500 dark:text-blue-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-dark mb-2">
+                No Activity Logged Yet
+              </h3>
+              <p className="text-muted-dark mb-4">
+                Start tracking your fitness journey today!
+              </p>
               <Link
-                to="/goals/create"
-                className="inline-block bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition"
+                to="/log-activity"
+                className="inline-block bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200"
               >
-                Create Your First Goal
+                Log Your First Activity
               </Link>
             </div>
           )}
-        </div>
-      </main>
-    </div>
-  </Layout>
-);
+
+          {/* Active Goals */}
+          <div className="card-dark rounded-xl shadow-dark p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-dark">
+                Active Goals ({activeGoals.length})
+              </h3>
+              <Link
+                to="/goals"
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm transition-colors duration-200"
+              >
+                View All →
+              </Link>
+            </div>
+
+            {activeGoals.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeGoals.slice(0, 6).map((goal) => (
+                  <GoalCard key={goal._id} goal={goal} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Target className="w-12 h-12 text-gray-400 dark:text-dark-muted mx-auto mb-3" />
+                <p className="text-muted-dark mb-4">No active goals yet</p>
+                <Link
+                  to="/goals/create"
+                  className="inline-block bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+                >
+                  Create Your First Goal
+                </Link>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </Layout>
+  );
 };
 
 export default Dashboard;

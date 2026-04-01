@@ -8,8 +8,8 @@ const WeeklyChart = ({ data }) => {
   })) || [];
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+    <div className="card-dark rounded-xl shadow-dark p-6">
+      <h3 className="text-lg font-semibold text-dark mb-6">
         Weekly Lifestyle Trend
       </h3>
       
@@ -47,7 +47,7 @@ const WeeklyChart = ({ data }) => {
         </ResponsiveContainer>
       ) : (
         <div className="h-64 flex items-center justify-center">
-          <p className="text-gray-500">No data available yet</p>
+          <p className="text-muted-dark">No data available yet</p>
         </div>
       )}
     </div>
