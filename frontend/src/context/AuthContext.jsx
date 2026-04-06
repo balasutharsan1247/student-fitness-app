@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { authService } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -16,9 +16,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Always fetch fresh user data
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     const token = authService.getToken();
-    
+
     if (token) {
       try {
         const response = await authService.getCurrentUser();
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
     return null;
-  };
+  }, []);
 
   // On mount, fetch user
   useEffect(() => {
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       const data = await authService.login(email, password);
       setUser(data.user);
@@ -60,10 +60,10 @@ export const AuthProvider = ({ children }) => {
         message: error.response?.data?.message || 'Login failed',
       };
     }
-  };
+  }, []);
 
   // Register function
-  const register = async (userData) => {
+  const register = useCallback(async (userData) => {
     try {
       const data = await authService.register(userData);
       setUser(data.user);
@@ -74,38 +74,41 @@ export const AuthProvider = ({ children }) => {
         message: error.response?.data?.message || 'Registration failed',
       };
     }
-  };
+  }, []);
 
   // Logout function
-  const logout = () => {
+  const logout = useCallback(() => {
     authService.logout();
     setUser(null);
-  };
+  }, []);
 
   // Update user in context AND localStorage
-  const updateUser = (userData) => {
+  const updateUser = useCallback((userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-  };
+  }, []);
 
   // Refresh user from backend - ALWAYS fetch fresh
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     console.log('🔄 Refreshing user data from database...');
     const freshUser = await fetchUserData();
     console.log('✅ Fresh user data:', freshUser?.points, 'pts');
     return freshUser;
-  };
+  }, [fetchUserData]);
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    updateUser,
-    refreshUser,
-    isAuthenticated: !!user,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      updateUser,
+      refreshUser,
+      isAuthenticated: !!user,
+    }),
+    [user, loading, login, register, logout, updateUser, refreshUser]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

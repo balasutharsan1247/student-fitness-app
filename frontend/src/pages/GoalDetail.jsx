@@ -26,22 +26,24 @@ const GoalDetail = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [completionEvidenceNote, setCompletionEvidenceNote] = useState('');
 
-  // Update progress form
-  const [progressValue, setProgressValue] = useState('');
-  const [addToValue, setAddToValue] = useState('');
-
-  // Fetch goal details
   useEffect(() => {
     const fetchGoal = async () => {
+      setLoading(true);
+      setError('');
+
       try {
-        setLoading(true);
         const response = await goalService.getGoalById(id);
-        setGoal(response.data);
-        setProgressValue(response.data.currentValue || '');
+
+        if (response.success) {
+          setGoal(response.data);
+        } else {
+          setError(response.message || 'Failed to load goal');
+        }
       } catch (err) {
-        console.error('Error fetching goal:', err);
-        setError('Failed to load goal details');
+        console.error('Fetch goal error:', err);
+        setError(err.response?.data?.message || 'Failed to load goal');
       } finally {
         setLoading(false);
       }
@@ -49,127 +51,6 @@ const GoalDetail = () => {
 
     fetchGoal();
   }, [id]);
-
-  // Update progress
-  const handleUpdateProgress = async (e) => {
-    e.preventDefault();
-    setUpdating(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      let updateData = {};
-
-      if (addToValue !== '') {
-        updateData.addToValue = parseFloat(addToValue);
-      } else if (progressValue !== '') {
-        updateData.currentValue = parseFloat(progressValue);
-      } else {
-        setError('Please enter a value');
-        setUpdating(false);
-        return;
-      }
-
-      const response = await goalService.updateProgress(id, updateData);
-
-      if (response.success) {
-        const updatedGoal = response.data;
-        setGoal(updatedGoal);
-        setProgressValue(updatedGoal.currentValue);
-        setAddToValue('');
-
-        // Check if goal was auto-completed
-        if (response.pointsAwarded) {
-          let message = `🎉 Goal Auto-Completed!\n\n`;
-          message += `Points Earned: ${response.pointsAwarded}\n`;
-          message += `Total Points: ${response.totalPoints}`;
-
-          if (response.levelUp) {
-            message += `\n\n🌟 ${response.levelUp.message} 🌟`;
-          }
-
-          setSuccess(message);
-
-          // Refresh user to update points in navbar
-          await refreshUser();
-
-          // Redirect after 2.5 seconds
-          setTimeout(() => navigate('/goals'), 2500);
-        } else {
-          setSuccess(
-            `✅ Progress updated! ${updatedGoal.currentValue} / ${updatedGoal.targetValue} ${updatedGoal.unit}`
-          );
-          setTimeout(() => setSuccess(''), 3000);
-        }
-      }
-    } catch (err) {
-      console.error('Update progress error:', err);
-      setError(err.response?.data?.message || 'Failed to update progress');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  // Complete goal
-  const handleCompleteGoal = async () => {
-    if (!window.confirm('Mark this goal as completed?')) return;
-
-    setUpdating(true);
-    setError('');
-
-    try {
-      const response = await goalService.completeGoal(id);
-
-      if (response.success) {
-        const {
-          pointsAwarded,
-          previousPoints,
-          totalPoints,
-          pointsBreakdown,
-          levelUp,
-        } = response.data;
-
-        // Build success message with breakdown
-        let message = '🎉 Goal Completed!\n\n';
-        message += '━━━━━━━━━━━━━━━━━━━━\n';
-        message += 'POINTS BREAKDOWN:\n';
-        message += '━━━━━━━━━━━━━━━━━━━━\n\n';
-
-        if (pointsBreakdown.details) {
-          pointsBreakdown.details.forEach((detail) => {
-            message += `• ${detail.label}: +${detail.value}\n`;
-          });
-        }
-
-        message += '\n━━━━━━━━━━━━━━━━━━━━\n';
-        message += `Total Earned: ${pointsAwarded} points\n`;
-        message += `Previous Total: ${previousPoints} pts\n`;
-        message += `New Total: ${totalPoints} pts\n`;
-        message += '━━━━━━━━━━━━━━━━━━━━';
-
-        if (levelUp) {
-          message += `\n\n🌟 ${levelUp.message} 🌟`;
-          message += `\n(${levelUp.previousLevel} → ${levelUp.newLevel})`;
-        }
-
-        setSuccess(message);
-        setGoal(response.data.goal);
-
-        // Refresh user data to update navbar
-        await refreshUser();
-
-        // Redirect after 4 seconds
-        setTimeout(() => {
-          navigate('/goals');
-        }, 4000);
-      }
-    } catch (err) {
-      console.error('Complete goal error:', err);
-      setError(err.response?.data?.message || 'Failed to complete goal');
-    } finally {
-      setUpdating(false);
-    }
-  };
 
   // Abandon goal
   const handleAbandonGoal = async () => {
@@ -188,6 +69,39 @@ const GoalDetail = () => {
     } catch (err) {
       console.error('Abandon goal error:', err);
       setError(err.response?.data?.message || 'Failed to abandon goal');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCompleteGoal = async () => {
+    if (goal.verificationType !== 'confirmable') {
+      setError('This goal can only be completed by verified log evidence.');
+      return;
+    }
+    if (!completionEvidenceNote.trim()) {
+      setError('Please add a short completion note before confirming.');
+      return;
+    }
+
+    setUpdating(true);
+    setError('');
+    try {
+      const response = await goalService.completeGoal(id, {
+        completionEvidenceNote: completionEvidenceNote.trim(),
+      });
+      if (response.success) {
+        setGoal(response.data.goal);
+        const newLevel = response.data.level;
+        setSuccess(
+          newLevel
+            ? `Goal confirmed and completed successfully. You are now Level ${newLevel}.`
+            : 'Goal confirmed and completed successfully.'
+        );
+        await refreshUser();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to complete goal');
     } finally {
       setUpdating(false);
     }
@@ -256,7 +170,7 @@ const GoalDetail = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-dark">Goal not found</p>
+          <p className="text-muted-dark">{error || 'Goal not found'}</p>
           <Link to="/goals" className="text-primary-500 dark:text-primary-400 hover:underline mt-2 inline-block">
             Back to Goals
           </Link>
@@ -276,11 +190,11 @@ const GoalDetail = () => {
       case 'Completed':
         return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
       case 'In Progress':
-        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
       case 'Not Started':
         return 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-300';
       case 'Abandoned':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400';
+        return 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-300';
       default:
         return 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-300';
     }
@@ -301,7 +215,7 @@ const GoalDetail = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
@@ -319,20 +233,11 @@ const GoalDetail = () => {
 
             {/* Action buttons */}
             <div className="flex items-center space-x-2">
-              {goal.status !== 'Completed' && goal.status !== 'Abandoned' && (
-                <button
-                  onClick={handleCompleteGoal}
-                  disabled={updating}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors duration-200 text-sm font-semibold disabled:opacity-50"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Complete</span>
-                </button>
-              )}
+
               <button
                 onClick={handleDeleteGoal}
                 disabled={updating}
-                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 disabled:opacity-50"
                 title="Delete Goal"
               >
                 <Trash2 className="w-5 h-5" />
@@ -365,6 +270,11 @@ const GoalDetail = () => {
                   <span className="bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full font-medium">
                     {goal.category}
                   </span>
+                  <span className="bg-gray-100 dark:bg-dark-hover text-muted-dark px-3 py-1 rounded-full font-medium">
+                    {goal.verificationType === 'confirmable'
+                      ? 'Confirmable'
+                      : 'Auto-verifiable'}
+                  </span>
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-4 h-4" />
                     <span>
@@ -372,7 +282,7 @@ const GoalDetail = () => {
                     </span>
                   </div>
                   {daysRemaining >= 0 ? (
-                    <span className="text-orange-600 dark:text-orange-400 font-medium">
+                    <span className="text-green-700 dark:text-green-300 font-medium">
                       {daysRemaining} days left
                     </span>
                   ) : (
@@ -384,7 +294,7 @@ const GoalDetail = () => {
 
                 {/* Motivation Quote */}
                 {goal.motivationQuote && (
-                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-primary-500 dark:border-primary-400 rounded">
+                  <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-primary-500 dark:border-primary-400 rounded">
                     <p className="text-gray-700 dark:text-dark-text italic">"{goal.motivationQuote}"</p>
                   </div>
                 )}
@@ -413,66 +323,14 @@ const GoalDetail = () => {
                     ></div>
                   </div>
                   <div className="flex items-center justify-between mt-2 text-sm text-muted-dark">
-                    <span>{goal.currentValue} {goal.unit}</span>
-                    <span>{goal.targetValue} {goal.unit}</span>
+                    <span>
+                      {goal.verificationType === 'confirmable'
+                        ? '* Confirm with a short evidence note *'
+                        : '* Automatically tracked from daily logs *'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Update Progress Form */}
-                {goal.status !== 'Completed' && goal.status !== 'Abandoned' && (
-                  <form onSubmit={handleUpdateProgress} className="space-y-4">
-                    <div className="p-4 bg-gray-50 dark:bg-dark-bg rounded-lg border-dark">
-                      <p className="text-sm font-medium text-dark mb-3">
-                        Update Your Progress
-                      </p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm text-muted-dark mb-2">
-                            Set Current Value
-                          </label>
-                          <input
-                            type="number"
-                            value={progressValue}
-                            onChange={(e) => {
-                              setProgressValue(e.target.value);
-                              setAddToValue('');
-                            }}
-                            placeholder={`Current: ${goal.currentValue}`}
-                            step="0.1"
-                            className="input-dark w-full px-3 py-2 rounded-lg focus:ring-2 outline-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm text-muted-dark mb-2">
-                            Or Add to Current
-                          </label>
-                          <input
-                            type="number"
-                            value={addToValue}
-                            onChange={(e) => {
-                              setAddToValue(e.target.value);
-                              setProgressValue('');
-                            }}
-                            placeholder="e.g., +5"
-                            step="0.1"
-                            className="input-dark w-full px-3 py-2 rounded-lg focus:ring-2 outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={updating}
-                        className="btn-primary-dark mt-4 w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 font-semibold disabled:opacity-50"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>{updating ? 'Updating...' : 'Update Progress'}</span>
-                      </button>
-                    </div>
-                  </form>
-                )}
               </div>
 
               {/* Rewards */}
@@ -508,30 +366,16 @@ const GoalDetail = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-dark">Current</span>
-                    <span className="font-semibold text-dark">
-                      {goal.currentValue} {goal.unit}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
                     <span className="text-muted-dark">Target</span>
                     <span className="font-semibold text-dark">
                       {goal.targetValue} {goal.unit}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-dark">Remaining</span>
-                    <span className="font-semibold text-dark">
-                      {(goal.targetValue - goal.currentValue).toFixed(1)} {goal.unit}
-                    </span>
-                  </div>
-
                   <div className="pt-4 divider-dark">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-dark">Points</span>
-                      <div className="flex items-center space-x-1 text-yellow-600 dark:text-yellow-400">
+                      <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
                         <Award className="w-4 h-4" />
                         <span className="font-bold">{goal.points}</span>
                       </div>
@@ -587,14 +431,25 @@ const GoalDetail = () => {
                   </h3>
 
                   <div className="space-y-2">
-                    <button
-                      onClick={handleCompleteGoal}
-                      disabled={updating}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-semibold disabled:opacity-50"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>Mark as Complete</span>
-                    </button>
+                    {goal.verificationType === 'confirmable' && (
+                      <>
+                        <textarea
+                          value={completionEvidenceNote}
+                          onChange={(e) => setCompletionEvidenceNote(e.target.value)}
+                          placeholder="Add a short note as completion evidence..."
+                          rows={3}
+                          className="textarea-dark w-full px-3 py-2 rounded-lg outline-none"
+                        />
+                        <button
+                          onClick={handleCompleteGoal}
+                          disabled={updating}
+                          className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-semibold disabled:opacity-50"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          <span>Confirm Completion</span>
+                        </button>
+                      </>
+                    )}
 
                     <button
                       onClick={handleAbandonGoal}

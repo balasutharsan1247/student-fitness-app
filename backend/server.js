@@ -14,10 +14,11 @@ const app = express();
 app.use(cors(
   {
     origin: [
-    'http://localhost:5173',
-    'http://10.240.145.23.sslip.io:5173' 
-  ],
-  credentials: true
+      'http://localhost:5173',
+      'http://10.240.145.23.sslip.io:5173',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
+    credentials: true
   }
 )); // Allow frontend to talk to backend
 app.use(express.json()); // Allow server to read JSON data
@@ -25,7 +26,7 @@ app.use(express.urlencoded({ extended: true })); // Allow server to read form da
 
 // Test route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Welcome to Student Fitness Tracker API!',
     status: 'Server is running successfully',
     timestamp: new Date().toISOString()
@@ -34,7 +35,7 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'OK',
     message: 'Backend is healthy and running!',
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
@@ -44,7 +45,10 @@ app.get('/api/health', (req, res) => {
 // ==================== IMPORT ROUTES ====================
 const authRoutes = require('./routes/auth');
 const fitnessLogRoutes = require('./routes/fitnessLog');
-const goalRoutes = require('./routes/goal'); 
+const goalRoutes = require('./routes/goal');
+const adminRoutes = require('./routes/admin');
+const mentorRoutes = require('./routes/mentor');
+const leaderboardRoutes = require('./routes/leaderboard');
 
 // ==================== MOUNT ROUTES ====================
 // All auth routes will be prefixed with /api/auth
@@ -56,13 +60,22 @@ app.use('/api/fitness', fitnessLogRoutes);
 // All goal routes will be prefixed with /api/goals
 app.use('/api/goals', goalRoutes);
 
+// Admin dashboard routes prefixed with /api/admin
+app.use('/api/admin', adminRoutes);
+
+// Mentor routes prefixed with /api/mentor
+app.use('/api/mentor', mentorRoutes);
+
+// Leaderboard routes prefixed with /api/leaderboard
+app.use('/api/leaderboard', leaderboardRoutes);
+
 // Connect to MongoDB
 const connectDB = async () => {
   try {
     // Removed useNewUrlParser and useUnifiedTopology as they are 
     // no longer supported in Mongoose 9.x
     await mongoose.connect(process.env.MONGODB_URI);
-    
+
     console.log('✅ MongoDB Connected Successfully!');
     console.log('📊 Database:', mongoose.connection.name);
   } catch (error) {
@@ -79,9 +92,14 @@ connectDB();
 const PORT = process.env.PORT || 5000;
 
 // Start the server
-app.listen(PORT, '0.0.0.0',() => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('🚀 Server is running!');
   console.log(`📡 Server URL: http://localhost:${PORT}`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('Press Ctrl+C to stop the server');
+
+  // Initialize cron jobs
+  const { initGoogleFitSyncJob } = require('./jobs/syncJob');
+  initGoogleFitSyncJob();
+  console.log('⏰ Background sync jobs initialized.');
 });

@@ -23,6 +23,9 @@ exports.createGoal = async (req, res) => {
       milestones,
       reminderEnabled,
       reminderFrequency,
+      metricType,
+      goalMode,
+      verificationType,
     } = req.body;
 
     // Validate target date is in the future
@@ -35,6 +38,9 @@ exports.createGoal = async (req, res) => {
 
     // Create goal
     const currentVal = currentValue !== undefined ? currentValue : 0;
+    const resolvedVerificationType =
+      verificationType === 'confirmable' ? 'confirmable' : 'auto_verifiable';
+    const isAutoTracked = resolvedVerificationType === 'auto_verifiable';
 
     const goal = await Goal.create({
       user: userId,
@@ -42,6 +48,10 @@ exports.createGoal = async (req, res) => {
       description,
       category,
       targetValue,
+      metricType,
+      goalMode,
+      isAutoTracked,
+      verificationType: resolvedVerificationType,
       currentValue: currentVal,
       startingValue: currentVal,  // ✅ Set startingValue explicitly!
       unit,
@@ -64,9 +74,6 @@ exports.createGoal = async (req, res) => {
       user.points = (user.points || 0) + goal.points;
       user.level = Math.floor(user.points / 500) + 1;
 
-      if (goal.badge && !user.badges.includes(goal.badge)) {
-        user.badges.push(goal.badge);
-      }
       await user.save();
     }
 
@@ -330,6 +337,14 @@ exports.updateProgress = async (req, res) => {
       });
     }
 
+    if (goal.verificationType === 'auto_verifiable' || goal.isAutoTracked) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Auto-tracked goals cannot be manually progressed. Log activity instead.',
+      });
+    }
+
     // Update current value
     if (addToValue !== undefined) {
       goal.currentValue = (goal.currentValue || 0) + addToValue;
@@ -356,12 +371,12 @@ exports.updateProgress = async (req, res) => {
     // Award points and update user if completed
     if (wasCompleted) {
       const user = await User.findById(userId);
-      const previousPoints = user.points || 0;
-      const previousLevel = user.level || 1;
+      const pointsForCompletion = goal.verificationType === 'confirmable' ? 12 : 20;
+      goal.points = pointsForCompletion;
+      await goal.save();
 
-      user.points += goal.points;
-      const newLevel = Math.floor(user.points / 500) + 1;
-      user.level = newLevel;
+      user.points = (user.points || 0) + pointsForCompletion;
+      user.level = Math.floor(user.points / 500) + 1;
 
       await user.save();
 
@@ -369,16 +384,9 @@ exports.updateProgress = async (req, res) => {
         success: true,
         message: 'Goal auto-completed! Progress updated and points awarded.',
         data: goal,
-        pointsAwarded: goal.points,
+        pointsAwarded: pointsForCompletion,
         totalPoints: user.points,
-        levelUp:
-          newLevel > previousLevel
-            ? {
-              previousLevel,
-              newLevel,
-              message: `🎉 Level Up! You're now Level ${newLevel}!`,
-            }
-            : null,
+        level: user.level,
       });
     }
 
@@ -404,6 +412,7 @@ exports.completeGoal = async (req, res) => {
   try {
     const userId = req.user.id;
     const goalId = req.params.id;
+    const { completionEvidenceNote } = req.body;
 
     let goal = await Goal.findById(goalId);
 
@@ -430,40 +439,43 @@ exports.completeGoal = async (req, res) => {
       });
     }
 
+    if (goal.verificationType === 'auto_verifiable' || goal.isAutoTracked) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Auto-tracked goals are completed only from verified activity logs.',
+      });
+    }
+
+    if (!completionEvidenceNote || !completionEvidenceNote.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please add a short completion note for confirmable goals.',
+      });
+    }
+
     // Mark as completed
     goal.status = 'Completed';
     goal.completedDate = Date.now();
     goal.progress = 100;
     goal.currentValue = goal.targetValue;
+    goal.completionMethod = 'self_confirmed';
+    goal.completionEvidenceNote = completionEvidenceNote.trim();
 
-    // Calculate points with bonuses
+    // Confirmable goal reward (simple and defensible)
     const pointsBreakdown = calculatePointsBreakdown(goal);
     goal.points = pointsBreakdown.total;
 
     await goal.save();
 
-    // Update user points and level
+    // Update user points
     const user = await User.findById(userId);
     const previousPoints = user.points || 0;
-    const previousLevel = user.level || 1;
 
     user.points = previousPoints + goal.points;
-
-    // Calculate new level
-    const newLevel = Math.floor(user.points / 500) + 1;
-    user.level = newLevel;
-
-    // Award badge if special milestone
-    if (goal.badge) {
-      if (!user.badges.includes(goal.badge)) {
-        user.badges.push(goal.badge);
-      }
-    }
+    user.level = Math.floor(user.points / 500) + 1;
 
     await user.save();
-
-    // Check if leveled up
-    const leveledUp = newLevel > previousLevel;
 
     res.status(200).json({
       success: true,
@@ -473,14 +485,8 @@ exports.completeGoal = async (req, res) => {
         pointsAwarded: goal.points,
         previousPoints: previousPoints,
         totalPoints: user.points,
+        level: user.level,
         pointsBreakdown: pointsBreakdown,
-        levelUp: leveledUp
-          ? {
-            previousLevel,
-            newLevel,
-            message: `🎉 Level Up! You're now Level ${newLevel}!`,
-          }
-          : null,
       },
     });
   } catch (error) {
@@ -496,127 +502,19 @@ exports.completeGoal = async (req, res) => {
 // Helper function to calculate points breakdown
 function calculatePointsBreakdown(goal) {
   const breakdown = {
-    base: 100,
-    earlyCompletion: 0,
-    categoryBonus: 0,
-    progressBonus: 0,
-    commitmentBonus: 0,
-    milestoneBonus: 0,
+    base: goal.verificationType === 'confirmable' ? 12 : 20,
     total: 0,
     details: [],
   };
 
-  breakdown.details.push({ label: 'Base Points', value: 100 });
-
-  // BONUS 1: Early Completion
-  if (goal.targetDate && goal.completedDate) {
-    const deadline = new Date(goal.targetDate);
-    const completed = new Date(goal.completedDate);
-
-    if (completed < deadline) {
-      const daysEarly = Math.ceil(
-        (deadline - completed) / (1000 * 60 * 60 * 24)
-      );
-
-      if (daysEarly >= 7) {
-        breakdown.earlyCompletion = 50;
-        breakdown.details.push({
-          label: 'Early Completion (1+ week)',
-          value: 50,
-        });
-      } else if (daysEarly >= 3) {
-        breakdown.earlyCompletion = 30;
-        breakdown.details.push({
-          label: 'Early Completion (3-6 days)',
-          value: 30,
-        });
-      } else if (daysEarly >= 1) {
-        breakdown.earlyCompletion = 20;
-        breakdown.details.push({
-          label: 'Early Completion (1-2 days)',
-          value: 20,
-        });
-      }
-    }
-  }
-
-  // BONUS 2: Category Difficulty
-  const categoryBonuses = {
-    'Weight Loss': 50,
-    'Weight Gain': 50,
-    'Muscle Building': 45,
-    'Cardio': 40,
-    'Flexibility': 30,
-    'Sleep': 35,
-    'Nutrition': 30,
-    'Hydration': 25,
-    'Steps': 25,
-    'Stress Management': 40,
-    'General Fitness': 20,
-    'Other': 15,
-  };
-
-  breakdown.categoryBonus = categoryBonuses[goal.category] || 15;
   breakdown.details.push({
-    label: `${goal.category} Category`,
-    value: breakdown.categoryBonus,
+    label:
+      goal.verificationType === 'confirmable'
+        ? 'Confirmable Goal Reward'
+        : 'Auto-verifiable Goal Reward',
+    value: breakdown.base,
   });
-
-  // BONUS 3: Progress Achievement
-  const startValue = goal.startingValue || 0;
-  const progressMade = goal.currentValue - startValue;
-  const targetRange = Math.abs(goal.targetValue - startValue);
-
-  if (targetRange > 0) {
-    const progressPercent = (Math.abs(progressMade) / targetRange) * 100;
-    if (progressPercent >= 100) {
-      breakdown.progressBonus = 25;
-      breakdown.details.push({ label: 'Target Achieved', value: 25 });
-    }
-  }
-
-  // BONUS 4: Commitment Duration
-  if (goal.startDate && goal.completedDate) {
-    const duration = Math.ceil(
-      (new Date(goal.completedDate) - new Date(goal.startDate)) /
-      (1000 * 60 * 60 * 24)
-    );
-
-    if (duration >= 60) {
-      breakdown.commitmentBonus = 40;
-      breakdown.details.push({
-        label: 'Long-term Commitment (60+ days)',
-        value: 40,
-      });
-    } else if (duration >= 30) {
-      breakdown.commitmentBonus = 25;
-      breakdown.details.push({ label: 'Commitment (30+ days)', value: 25 });
-    } else if (duration >= 14) {
-      breakdown.commitmentBonus = 15;
-      breakdown.details.push({ label: 'Commitment (14+ days)', value: 15 });
-    }
-  }
-
-  // BONUS 5: Milestones
-  if (goal.milestones && goal.milestones.length > 0) {
-    const achievedMilestones = goal.milestones.filter((m) => m.achieved).length;
-    if (achievedMilestones > 0) {
-      breakdown.milestoneBonus = achievedMilestones * 10;
-      breakdown.details.push({
-        label: `Milestones (${achievedMilestones})`,
-        value: breakdown.milestoneBonus,
-      });
-    }
-  }
-
-  // Calculate total
-  breakdown.total =
-    breakdown.base +
-    breakdown.earlyCompletion +
-    breakdown.categoryBonus +
-    breakdown.progressBonus +
-    breakdown.commitmentBonus +
-    breakdown.milestoneBonus;
+  breakdown.total = breakdown.base;
 
   return breakdown;
 }
@@ -710,26 +608,14 @@ exports.deleteGoal = async (req, res) => {
     await goal.deleteOne();
     console.log('✅ Goal deleted from database');
 
-    // If goal was completed, deduct points and recalculate level
+    // If goal was completed, deduct points
     if (wasCompleted && pointsToDeduct > 0) {
       const user = await User.findById(userId);
       const previousPoints = user.points || 0;
-      const previousLevel = user.level || 1;
-
-      console.log('👤 User before update:');
-      console.log('Previous points:', previousPoints);
-      console.log('Previous level:', previousLevel);
 
       // Deduct points (don't go below 0)
       user.points = Math.max(0, previousPoints - pointsToDeduct);
-
-      // Recalculate level
-      const newLevel = Math.floor(user.points / 500) + 1;
-      user.level = newLevel;
-
-      console.log('👤 User after calculation:');
-      console.log('New points:', user.points);
-      console.log('New level:', newLevel);
+      user.level = Math.floor(user.points / 500) + 1;
 
       await user.save();
       console.log('✅ User saved to database');
@@ -741,9 +627,7 @@ exports.deleteGoal = async (req, res) => {
           pointsDeducted: pointsToDeduct,
           previousPoints: previousPoints,
           newPoints: user.points,
-          levelChanged: newLevel !== previousLevel,
-          previousLevel: previousLevel,
-          newLevel: newLevel,
+          newLevel: user.level,
           user: {
             points: user.points,
             level: user.level,

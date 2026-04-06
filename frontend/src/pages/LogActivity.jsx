@@ -1,104 +1,86 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { fitnessService } from '../services/api';
 import Layout from '../components/Layout';
 import GoogleFitConnect from '../components/GoogleFitConnect';
 
-import { 
-  Activity, 
-  ArrowLeft, 
-  Footprints, 
-  Flame, 
-  Dumbbell, 
+import {
+  Dumbbell,
   UtensilsCrossed,
-  Moon,
   Droplets,
-  Monitor,
-  Smile,
-  Scale,
   Save,
-  Plus,
-  X
+  Trash2,
+  AlertCircle,
+  Footprints,
+  Lock,
+  Moon
 } from 'lucide-react';
 
 const LogActivity = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   // State
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Form data
-  const [formData, setFormData] = useState({
-    steps: '',
-    distance: '',
-    activeMinutes: '',
-    caloriesBurned: '',
-    waterIntake: '',
-    screenTime: '',
-    stressLevel: '',
-    mood: '',
-    weight: '',
-    notes: '',
-  });
-
-  // Sleep data
-  const [sleep, setSleep] = useState({
-    hours: '',
-    quality: '',
-  });
-
-  // Workouts array
+  // Form Data
   const [workouts, setWorkouts] = useState([]);
-  const [currentWorkout, setCurrentWorkout] = useState({
-    type: '',
-    duration: '',
-    intensity: 'Moderate',
-    caloriesBurned: '',
-    notes: '',
+  const [currentWorkout, setCurrentWorkout] = useState({ type: '', duration: '' });
+
+  const [hydration, setHydration] = useState('');
+  const [sleep, setSleep] = useState({ hours: '', quality: 'Good' });
+
+  const [meals, setMeals] = useState({
+    morning: '',
+    afternoon: '',
+    dinner: '',
+    snacks: '',
   });
 
-  // Meals array
-  const [meals, setMeals] = useState([]);
-  const [currentMeal, setCurrentMeal] = useState({
-    mealType: '',
-    description: '',
-    calories: '',
-    location: '',
-    healthRating: '',
+  // Google Fit data (read-only for display)
+  const [fitData, setFitData] = useState({
+    steps: 0,
+    distance: 0,
+    activeMinutes: 0,
+    caloriesBurned: 0
   });
 
-  // Load today's log if exists
+  // Load today's log if exists for "Edit" functionality
   useEffect(() => {
     const loadTodayLog = async () => {
       try {
         const response = await fitnessService.getTodayLog();
         if (response.success) {
           const log = response.data;
-          setFormData({
-            steps: log.steps || '',
-            distance: log.distance || '',
-            activeMinutes: log.activeMinutes || '',
-            caloriesBurned: log.caloriesBurned || '',
-            waterIntake: log.waterIntake || '',
-            screenTime: log.screenTime || '',
-            stressLevel: log.stressLevel || '',
-            mood: log.mood || '',
-            weight: log.weight || '',
-            notes: log.notes || '',
+
+          // Map backend meals to our 4 categories
+          const mealMap = { morning: '', afternoon: '', dinner: '', snacks: '' };
+          log.meals?.forEach(m => {
+            if (m.mealType === 'Breakfast') mealMap.morning = m.description;
+            if (m.mealType === 'Lunch') mealMap.afternoon = m.description;
+            if (m.mealType === 'Dinner') mealMap.dinner = m.description;
+            if (m.mealType === 'Snack') mealMap.snacks = m.description;
           });
-          setSleep({
-            hours: log.sleep?.hours || '',
-            quality: log.sleep?.quality || '',
-          });
+
+          setMeals(mealMap);
+          setHydration(log.waterIntake || '');
           setWorkouts(log.workouts || []);
-          setMeals(log.meals || []);
+          if (log.sleep) {
+            setSleep({
+              hours: log.sleep.hours || '',
+              quality: log.sleep.quality || 'Good'
+            });
+          }
+
+          setFitData({
+            steps: log.steps || 0,
+            distance: log.distance || 0,
+            activeMinutes: log.activeMinutes || 0,
+            caloriesBurned: log.caloriesBurned || 0
+          });
         }
       } catch (err) {
-        // No log for today yet - that's okay
         console.log('No log for today');
       }
     };
@@ -106,72 +88,24 @@ const LogActivity = () => {
     loadTodayLog();
   }, []);
 
-  // Handle basic input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleClear = () => {
+    setWorkouts([]);
+    setHydration('');
+    setSleep({ hours: '', quality: 'Good' });
+    setMeals({ morning: '', afternoon: '', dinner: '', snacks: '' });
     setError('');
   };
 
-  // Handle sleep input changes
-  const handleSleepChange = (e) => {
-    const { name, value } = e.target;
-    setSleep(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Add workout
   const addWorkout = () => {
-    if (!currentWorkout.type || !currentWorkout.duration) {
-      setError('Please fill in workout type and duration');
-      return;
-    }
-
-    setWorkouts([...workouts, { ...currentWorkout }]);
-    setCurrentWorkout({
-      type: '',
-      duration: '',
-      intensity: 'Moderate',
-      caloriesBurned: '',
-      notes: '',
-    });
-    setError('');
+    if (!currentWorkout.type || !currentWorkout.duration) return;
+    setWorkouts([...workouts, { ...currentWorkout, duration: parseInt(currentWorkout.duration) }]);
+    setCurrentWorkout({ type: '', duration: '' });
   };
 
-  // Remove workout
   const removeWorkout = (index) => {
     setWorkouts(workouts.filter((_, i) => i !== index));
   };
 
-  // Add meal
-  const addMeal = () => {
-    if (!currentMeal.mealType || !currentMeal.description) {
-      setError('Please fill in meal type and description');
-      return;
-    }
-
-    setMeals([...meals, { ...currentMeal }]);
-    setCurrentMeal({
-      mealType: '',
-      description: '',
-      calories: '',
-      location: '',
-      healthRating: '',
-    });
-    setError('');
-  };
-
-  // Remove meal
-  const removeMeal = (index) => {
-    setMeals(meals.filter((_, i) => i !== index));
-  };
-
-  // Calculate total calories consumed
-  const totalCaloriesConsumed = meals.reduce(
-    (sum, meal) => sum + (parseFloat(meal.calories) || 0),
-    0
-  );
-
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -179,53 +113,34 @@ const LogActivity = () => {
     setSuccess(false);
 
     try {
-      // Prepare data
-      const logData = {
-        steps: formData.steps ? parseInt(formData.steps) : undefined,
-        distance: formData.distance ? parseFloat(formData.distance) : undefined,
-        activeMinutes: formData.activeMinutes ? parseInt(formData.activeMinutes) : undefined,
-        caloriesBurned: formData.caloriesBurned ? parseInt(formData.caloriesBurned) : undefined,
-        waterIntake: formData.waterIntake ? parseFloat(formData.waterIntake) : undefined,
-        screenTime: formData.screenTime ? parseFloat(formData.screenTime) : undefined,
-        stressLevel: formData.stressLevel ? parseInt(formData.stressLevel) : undefined,
-        mood: formData.mood || undefined,
-        weight: formData.weight ? parseFloat(formData.weight) : undefined,
-        notes: formData.notes || undefined,
-        sleep: sleep.hours ? {
-          hours: parseFloat(sleep.hours),
-          quality: sleep.quality || undefined,
-        } : undefined,
-        workouts: workouts.length > 0 ? workouts.map(w => ({
-          type: w.type,
-          duration: parseInt(w.duration),
-          intensity: w.intensity,
-          caloriesBurned: w.caloriesBurned ? parseInt(w.caloriesBurned) : undefined,
-          notes: w.notes || undefined,
-        })) : undefined,
-        meals: meals.length > 0 ? meals.map(m => ({
-          mealType: m.mealType,
-          description: m.description,
-          calories: m.calories ? parseInt(m.calories) : undefined,
-          location: m.location || undefined,
-          healthRating: m.healthRating ? parseInt(m.healthRating) : undefined,
-        })) : undefined,
-        totalCaloriesConsumed: totalCaloriesConsumed || undefined,
-      };
+      // Prepare backend payload
+      const formattedMeals = [];
+      if (meals.morning) formattedMeals.push({ mealType: 'Breakfast', description: meals.morning });
+      if (meals.afternoon) formattedMeals.push({ mealType: 'Lunch', description: meals.afternoon });
+      if (meals.dinner) formattedMeals.push({ mealType: 'Dinner', description: meals.dinner });
+      if (meals.snacks) formattedMeals.push({ mealType: 'Snack', description: meals.snacks });
 
-      // Remove undefined values
-      Object.keys(logData).forEach(key => {
-        if (logData[key] === undefined) {
-          delete logData[key];
-        }
-      });
+      const logData = {
+        source: 'manual',
+        verificationStatus: 'self_reported',
+        waterIntake: hydration ? parseFloat(hydration) : 0,
+        sleep: {
+          hours: sleep.hours ? parseFloat(sleep.hours) : 0,
+          quality: sleep.quality
+        },
+        workouts: workouts,
+        meals: formattedMeals,
+        // Carry over fit data if available
+        steps: fitData.steps,
+        distance: fitData.distance,
+        activeMinutes: fitData.activeMinutes,
+      };
 
       const response = await fitnessService.createLog(logData);
 
       if (response.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
+        setTimeout(() => navigate('/dashboard'), 1500);
       }
     } catch (err) {
       console.error('Log activity error:', err);
@@ -237,162 +152,74 @@ const LogActivity = () => {
 
   return (
     <Layout>
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
-        {success && (
-          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg">
-            ✅ Activity logged successfully! Redirecting to dashboard...
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
+        <main className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-dark mb-2">Daily Activity Log</h1>
+            <p className="text-muted-dark">Track your workout, hydration, and nutrition for today.</p>
           </div>
-        )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <GoogleFitConnect
-            onDataFetched={(data) => {
-              setFormData(prev => ({
-              ...prev,
-              steps: data.steps,
-              caloriesBurned: data.calories,
-              distance: data.distance,
-              activeMinutes: data.activeMinutes || prev.activeMinutes
-            }));
-            }}
-        />
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Physical Activity Section */}
-          <div className="card-dark rounded-xl shadow-dark p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <Footprints className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-dark">
-                Physical Activity
-              </h2>
+          {success && (
+            <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg">
+              ✅ Activity saved. Your Life Score is being updated!
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Steps
-                </label>
-                <input
-                  type="number"
-                  name="steps"
-                  value={formData.steps}
-                  onChange={handleChange}
-                  placeholder="10000"
-                  min="0"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
+          {error && (
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {/* Google Fit Sync Section */}
+          <div className="mb-8">
+            <GoogleFitConnect
+              onDataFetched={(data) => {
+                setFitData({
+                  steps: data.steps || 0,
+                  distance: data.distance || 0,
+                  activeMinutes: data.activeMinutes || 0,
+                  caloriesBurned: data.calories || 0
+                });
+              }}
+            />
+            <div className="mt-4 p-4 card-dark rounded-xl border border-gray-200 dark:border-dark-border grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <p className="text-xs text-muted-dark uppercase font-bold mb-1">Steps</p>
+                <p className="text-lg font-bold text-dark">{fitData.steps}</p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Distance (km)
-                </label>
-                <input
-                  type="number"
-                  name="distance"
-                  value={formData.distance}
-                  onChange={handleChange}
-                  placeholder="5.5"
-                  min="0"
-                  step="0.1"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
+              <div className="text-center">
+                <p className="text-xs text-muted-dark uppercase font-bold mb-1">Active mins</p>
+                <p className="text-lg font-bold text-dark">{fitData.activeMinutes}</p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Active Minutes
-                </label>
-                <input
-                  type="number"
-                  name="activeMinutes"
-                  value={formData.activeMinutes}
-                  onChange={handleChange}
-                  placeholder="30"
-                  min="0"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
+              <div className="text-center">
+                <p className="text-xs text-muted-dark uppercase font-bold mb-1">Distance</p>
+                <p className="text-lg font-bold text-dark">{fitData.distance.toFixed(1)} km</p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Calories Burned
-                </label>
-                <input
-                  type="number"
-                  name="caloriesBurned"
-                  value={formData.caloriesBurned}
-                  onChange={handleChange}
-                  placeholder="300"
-                  min="0"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
+              <div className="text-center">
+                <p className="text-xs text-muted-dark uppercase font-bold mb-1">Fit Calories</p>
+                <p className="text-lg font-bold text-dark">{fitData.caloriesBurned}</p>
               </div>
             </div>
           </div>
 
-          {/* Workouts Section */}
-          <div className="card-dark rounded-xl shadow-dark p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-orange-500 rounded-lg">
-                <Dumbbell className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-dark">Workouts</h2>
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Existing workouts */}
-            {workouts.length > 0 && (
-              <div className="mb-6 space-y-3">
-                {workouts.map((workout, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-hover rounded-lg border border-dark"
-                  >
-                    <div>
-                      <p className="font-semibold text-dark">
-                        {workout.type}
-                      </p>
-                      <p className="text-sm text-muted-dark">
-                        {workout.duration} min • {workout.intensity}
-                        {workout.caloriesBurned && ` • ${workout.caloriesBurned} cal`}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeWorkout(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+            {/* Workout Section */}
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-green-500 rounded-lg">
+                  <Dumbbell className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-dark">Workout</h2>
               </div>
-            )}
 
-            {/* Add new workout */}
-            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="font-medium text-dark">Add Workout</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Type *
-                  </label>
+              {/* Workout Input */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="md:col-span-1">
                   <select
                     value={currentWorkout.type}
-                    onChange={(e) =>
-                      setCurrentWorkout({ ...currentWorkout, type: e.target.value })
-                    }
+                    onChange={(e) => setCurrentWorkout({ ...currentWorkout, type: e.target.value })}
                     className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   >
                     <option value="">Select Type</option>
@@ -408,414 +235,210 @@ const LogActivity = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Duration (minutes) *
-                  </label>
+                <div className="md:col-span-1">
                   <input
                     type="number"
                     value={currentWorkout.duration}
-                    onChange={(e) =>
-                      setCurrentWorkout({ ...currentWorkout, duration: e.target.value })
-                    }
-                    placeholder="30"
+                    onChange={(e) => setCurrentWorkout({ ...currentWorkout, duration: e.target.value })}
+                    placeholder="Duration (mins)"
                     min="0"
                     className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Intensity
-                  </label>
-                  <select
-                    value={currentWorkout.intensity}
-                    onChange={(e) =>
-                      setCurrentWorkout({ ...currentWorkout, intensity: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Moderate">Moderate</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Calories Burned
-                  </label>
-                  <input
-                    type="number"
-                    value={currentWorkout.caloriesBurned}
-                    onChange={(e) =>
-                      setCurrentWorkout({
-                        ...currentWorkout,
-                        caloriesBurned: e.target.value,
-                      })
-                    }
-                    placeholder="200"
-                    min="0"
-                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Notes
-                  </label>
-                  <input
-                    type="text"
-                    value={currentWorkout.notes}
-                    onChange={(e) =>
-                      setCurrentWorkout({ ...currentWorkout, notes: e.target.value })
-                    }
-                    placeholder="Morning jog around campus"
-                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={addWorkout}
+                  disabled={!currentWorkout.type || !currentWorkout.duration}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition font-bold"
+                >
+                  Add Workout
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={addWorkout}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Workout</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Meals Section */}
-          <div className="card-dark rounded-xl shadow-dark p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-green-500 rounded-lg">
-                <UtensilsCrossed className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-dark">Meals & Nutrition</h2>
-            </div>
-
-            {/* Existing meals */}
-            {meals.length > 0 && (
-              <div className="mb-6 space-y-3">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-muted-dark">
-                    Total Calories: <span className="font-bold text-green-600">{totalCaloriesConsumed} kcal</span>
-                  </p>
-                </div>
-                {meals.map((meal, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-hover rounded-lg border border-dark"
-                  >
-                    <div>
-                      <p className="font-semibold text-dark">
-                        {meal.mealType}
-                      </p>
-                      <p className="text-sm text-muted-dark">
-                        {meal.description}
-                        {meal.calories && ` • ${meal.calories} cal`}
-                        {meal.location && ` • ${meal.location}`}
-                      </p>
+              {/* Workout List */}
+              {workouts.length > 0 && (
+                <div className="space-y-3">
+                  {workouts.map((w, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-hover rounded-lg border border-gray-100 dark:border-dark-border">
+                      <div className="flex items-center space-x-4">
+                        <span className="font-bold text-dark">{w.type}</span>
+                        <span className="text-sm text-muted-dark">{w.duration} minutes</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeWorkout(index)}
+                        className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeMeal(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+              {workouts.length === 0 && (
+                <p className="text-center text-sm text-muted-dark italic py-2">No workouts added yet</p>
+              )}
+            </div>
 
-            {/* Add new meal */}
-            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-              <p className="font-medium text-dark">Add Meal</p>
+            {/* Hydration Section */}
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-blue-500 rounded-lg">
+                  <Droplets className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-dark">Hydration</h2>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">Water Intake (Liters)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={hydration}
+                  onChange={(e) => setHydration(e.target.value)}
+                  placeholder="e.g. 2.5"
+                  min="0"
+                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Sleep Section */}
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-indigo-500 rounded-lg">
+                  <Moon className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-dark">Sleep</h2>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Meal Type *
-                  </label>
-                  <select
-                    value={currentMeal.mealType}
-                    onChange={(e) =>
-                      setCurrentMeal({ ...currentMeal, mealType: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="Breakfast">Breakfast</option>
-                    <option value="Lunch">Lunch</option>
-                    <option value="Dinner">Dinner</option>
-                    <option value="Snack">Snack</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Calories
-                  </label>
+                  <label className="block text-sm font-medium text-dark mb-2">Sleep Hours</label>
                   <input
                     type="number"
-                    value={currentMeal.calories}
-                    onChange={(e) =>
-                      setCurrentMeal({ ...currentMeal, calories: e.target.value })
-                    }
-                    placeholder="500"
+                    step="0.5"
+                    value={sleep.hours}
+                    onChange={(e) => setSleep({ ...sleep, hours: e.target.value })}
+                    placeholder="e.g. 8"
                     min="0"
+                    max="24"
                     className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   />
                 </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Description *
-                  </label>
-                  <input
-                    type="text"
-                    value={currentMeal.description}
-                    onChange={(e) =>
-                      setCurrentMeal({ ...currentMeal, description: e.target.value })
-                    }
-                    placeholder="Oatmeal with fruits and coffee"
-                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                  />
-                </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    value={currentMeal.location}
-                    onChange={(e) =>
-                      setCurrentMeal({ ...currentMeal, location: e.target.value })
-                    }
-                    placeholder="Campus Cafeteria"
-                    className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Health Rating (1-5)
-                  </label>
+                  <label className="block text-sm font-medium text-dark mb-2">Sleep Quality</label>
                   <select
-                    value={currentMeal.healthRating}
-                    onChange={(e) =>
-                      setCurrentMeal({ ...currentMeal, healthRating: e.target.value })
-                    }
+                    value={sleep.quality}
+                    onChange={(e) => setSleep({ ...sleep, quality: e.target.value })}
                     className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
                   >
-                    <option value="">Select Rating</option>
-                    <option value="1">1 - Not Healthy</option>
-                    <option value="2">2 - Below Average</option>
-                    <option value="3">3 - Average</option>
-                    <option value="4">4 - Healthy</option>
-                    <option value="5">5 - Very Healthy</option>
+                    <option value="Poor">Poor</option>
+                    <option value="Fair">Fair</option>
+                    <option value="Good">Good</option>
+                    <option value="Excellent">Excellent</option>
                   </select>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={addMeal}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Meal</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Sleep Section */}
-          <div className="card-dark rounded-xl shadow-dark p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-indigo-500 rounded-lg">
-                <Moon className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-dark">Sleep</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Sleep Hours
-                </label>
-                <input
-                  type="number"
-                  name="hours"
-                  value={sleep.hours}
-                  onChange={handleSleepChange}
-                  placeholder="7.5"
-                  min="0"
-                  max="24"
-                  step="0.5"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
+            {/* Food Section */}
+            <div className="card-dark rounded-xl shadow-dark p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="p-2 bg-orange-500 rounded-lg">
+                  <UtensilsCrossed className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-dark">Food Eaten</h2>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Sleep Quality
-                </label>
-                <select
-                  name="quality"
-                  value={sleep.quality}
-                  onChange={handleSleepChange}
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                >
-                  <option value="">Select Quality</option>
-                  <option value="Poor">Poor</option>
-                  <option value="Fair">Fair</option>
-                  <option value="Good">Good</option>
-                  <option value="Excellent">Excellent</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Lifestyle Section */}
-          <div className="card-dark rounded-xl shadow-dark p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-cyan-500 rounded-lg">
-                <Droplets className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-dark">Lifestyle & Wellness</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Water Intake (liters)
-                </label>
-                <input
-                  type="number"
-                  name="waterIntake"
-                  value={formData.waterIntake}
-                  onChange={handleChange}
-                  placeholder="2.5"
-                  min="0"
-                  step="0.1"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Screen Time (hours)
-                </label>
-                <input
-                  type="number"
-                  name="screenTime"
-                  value={formData.screenTime}
-                  onChange={handleChange}
-                  placeholder="5"
-                  min="0"
-                  step="0.5"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Stress Level (1-10)
-                </label>
-                <input
-                  type="number"
-                  name="stressLevel"
-                  value={formData.stressLevel}
-                  onChange={handleChange}
-                  placeholder="5"
-                  min="1"
-                  max="10"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
-                <p className="text-xs text-muted-dark mt-1">
-                  1 = Very Relaxed, 10 = Extremely Stressed
+              <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start space-x-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  <span className="font-bold">Tip for better accuracy:</span> Use portion sizes like <span className="font-semibold italic">"1 cup rice"</span> or <span className="font-semibold italic">"2 chapatis"</span> instead of just "rice". This helps our API calculate your Life Score more accurately.
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Mood
-                </label>
-                <select
-                  name="mood"
-                  value={formData.mood}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-muted-dark mb-2 uppercase tracking-wide text-xs">Morning (Breakfast)</label>
+                    <textarea
+                      rows="3"
+                      value={meals.morning}
+                      onChange={(e) => setMeals({ ...meals, morning: e.target.value })}
+                      placeholder="e.g. 1 cup oatmeal with berries"
+                      className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none resize-none h-24"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-muted-dark mb-2 uppercase tracking-wide text-xs">Afternoon (Lunch)</label>
+                    <textarea
+                      rows="3"
+                      value={meals.afternoon}
+                      onChange={(e) => setMeals({ ...meals, afternoon: e.target.value })}
+                      placeholder="e.g. 2 cups brown rice with lentil soup"
+                      className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none resize-none h-24"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-muted-dark mb-2 uppercase tracking-wide text-xs">Evening (Dinner)</label>
+                    <textarea
+                      rows="3"
+                      value={meals.dinner}
+                      onChange={(e) => setMeals({ ...meals, dinner: e.target.value })}
+                      placeholder="e.g. Mixed salad with grilled paneer"
+                      className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none resize-none h-24"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-muted-dark mb-2 uppercase tracking-wide text-xs">Snacks & Others</label>
+                    <textarea
+                      rows="3"
+                      value={meals.snacks}
+                      onChange={(e) => setMeals({ ...meals, snacks: e.target.value })}
+                      placeholder="e.g. 1 apple, 10 almonds"
+                      className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none resize-none h-24"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+              <button
+                type="button"
+                onClick={handleClear}
+                className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition font-semibold"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Clear Form</span>
+              </button>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <Link
+                  to="/dashboard"
+                  className="w-full sm:w-auto text-center px-6 py-3 border border-dark text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover transition font-semibold"
                 >
-                  <option value="">Select Mood</option>
-                  <option value="Very Bad">😞 Very Bad</option>
-                  <option value="Bad">😕 Bad</option>
-                  <option value="Neutral">😐 Neutral</option>
-                  <option value="Good">🙂 Good</option>
-                  <option value="Excellent">😄 Excellent</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">
-                  Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  name="weight"
-                  value={formData.weight}
-                  onChange={handleChange}
-                  placeholder="70"
-                  min="0"
-                  step="0.1"
-                  className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none"
-                />
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 px-10 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-bold shadow-lg shadow-green-200 dark:shadow-none disabled:opacity-50"
+                >
+                  <Save className="w-5 h-5" />
+                  <span>{loading ? 'Saving...' : 'Update Activity Log'}</span>
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Notes Section */}
-          <div className="card-dark rounded-xl shadow-dark p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-purple-500 rounded-lg">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-dark">Additional Notes</h2>
-            </div>
-
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="How did you feel today? Any achievements or challenges?"
-              rows="4"
-              className="w-full px-4 py-2 border border-dark input-dark rounded-lg outline-none resize-none"
-            />
-          </div>
-
-          {/* Submit Buttons */}
-          <div className="flex items-center justify-end space-x-4">
-            <Link
-              to="/dashboard"
-              className="px-6 py-3 border border-dark text-dark rounded-lg hover:bg-gray-50 dark:hover:bg-dark-hover transition font-semibold"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center space-x-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-5 h-5" />
-              <span>{loading ? 'Saving...' : 'Save Activity Log'}</span>
-            </button>
-          </div>
-        </form>
-      </main>
-    </div>
+          </form>
+        </main>
+      </div>
     </Layout>
   );
 };

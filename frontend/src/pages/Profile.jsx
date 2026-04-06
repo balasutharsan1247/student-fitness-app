@@ -1,9 +1,69 @@
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/api';
 import { User, Award, TrendingUp, Mail, Building, BookOpen, Calendar } from 'lucide-react';
 
+const HEALTH_CONSIDERATIONS_OPTIONS = [
+  { value: 'breathing_issues', label: 'Breathing issues' },
+  { value: 'heart_restriction', label: 'Heart restriction' },
+  { value: 'joint_pain', label: 'Joint pain' },
+  { value: 'diabetes_concern', label: 'Diabetes concern' },
+  { value: 'doctor_exercise_limit', label: 'Doctor exercise limit' },
+  { value: 'dietary_restriction', label: 'Dietary restriction' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'vegan', label: 'Vegan' },
+];
+
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const [selectedConsiderations, setSelectedConsiderations] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const isStudent = user?.role === 'student';
+  const profileIdLabel =
+    user?.role === 'admin'
+      ? 'Admin ID'
+      : user?.role === 'mentor'
+      ? 'Mentor ID'
+      : 'Student ID';
+  const profileIdValue =
+    user?.studentId || user?.mentorId || user?.adminId || '—';
+
+  useEffect(() => {
+    setSelectedConsiderations(user?.healthConsiderations || []);
+  }, [user]);
+
+  const handleCheckboxChange = (value) => {
+    setSelectedConsiderations((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsSaving(true);
+
+    try {
+      const response = await authService.updateProfile({
+        healthConsiderations: selectedConsiderations,
+      });
+      updateUser(response.user);
+      setSuccessMessage('Health considerations saved successfully.');
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || 'Unable to save health considerations.'
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <Layout>
@@ -20,7 +80,7 @@ const Profile = () => {
           <div className="card-dark rounded-xl shadow-dark p-8">
             {/* User Avatar */}
             <div className="flex items-center space-x-6 mb-8 pb-8 border-b border-dark">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-3xl">
                   {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                 </span>
@@ -31,56 +91,57 @@ const Profile = () => {
                 </h2>
                 <p className="text-muted-dark">{user?.email}</p>
                 
-                {/* Points and Level */}
-                <div className="mt-4">
-                  <div className="flex items-center space-x-4 mb-3">
-                    <div className="flex items-center space-x-2 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1 rounded-full">
-                      <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                      <span className="font-semibold text-yellow-900 dark:text-yellow-400">
-                        {user?.points || 0} pts
-                      </span>
+                {isStudent && (
+                  <div className="mt-4">
+                    <div className="flex items-center space-x-4 mb-3">
+                      <div className="flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                        <Award className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="font-semibold text-green-900 dark:text-green-400">
+                          {user?.points || 0} pts
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                        <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="font-semibold text-green-900 dark:text-green-400">
+                          Level {user?.level || Math.floor((user?.points || 0) / 500) + 1}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2 bg-purple-50 dark:bg-purple-900/20 px-3 py-1 rounded-full">
-                      <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span className="font-semibold text-purple-900 dark:text-purple-400">
-                        Level {user?.level || 1}
-                      </span>
+
+                    {/* Level Progress Bar */}
+                    <div className="mt-3">
+                      {(() => {
+                        const currentPoints = user?.points || 0;
+                        const currentLevel = user?.level || Math.floor(currentPoints / 500) + 1;
+                        const pointsForNextLevel = currentLevel * 500;
+                        const pointsInCurrentLevel = currentPoints % 500;
+                        const pointsNeeded = pointsForNextLevel - currentPoints;
+                        const progressPercent = (pointsInCurrentLevel / 500) * 100;
+
+                        return (
+                          <>
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span className="text-muted-dark">Progress to Level {currentLevel + 1}</span>
+                              <span className="font-semibold text-green-600 dark:text-green-400">
+                                {pointsNeeded > 0 ? `${pointsNeeded} pts to go` : 'Level capped!'}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-dark-border rounded-full h-2">
+                              <div
+                                className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                              ></div>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-muted-dark mt-1">
+                              <span>{pointsInCurrentLevel} pts in current level</span>
+                              <span>500 pts per level</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
-
-                  {/* Level Progress Bar */}
-                  <div className="mt-3">
-                    {(() => {
-                      const currentPoints = user?.points || 0;
-                      const currentLevel = user?.level || 1;
-                      const pointsForNextLevel = currentLevel * 500;
-                      const pointsInCurrentLevel = currentPoints % 500;
-                      const pointsNeeded = pointsForNextLevel - currentPoints;
-                      const progressPercent = (pointsInCurrentLevel / 500) * 100;
-
-                      return (
-                        <>
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-muted-dark">Progress to Level {currentLevel + 1}</span>
-                            <span className="font-semibold text-purple-600 dark:text-purple-400">
-                              {pointsNeeded > 0 ? `${pointsNeeded} pts to go` : 'Level capped!'}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-dark-border rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                            ></div>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-muted-dark mt-1">
-                            <span>{pointsInCurrentLevel} pts in current level</span>
-                            <span>500 pts per level</span>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -115,9 +176,9 @@ const Profile = () => {
               <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-muted-dark mb-2">
                   <BookOpen className="w-4 h-4" />
-                  <span>Student ID</span>
+                  <span>{profileIdLabel}</span>
                 </label>
-                <p className="text-dark font-semibold">{user?.studentId || '—'}</p>
+                <p className="text-dark font-semibold">{profileIdValue}</p>
               </div>
 
               {/* Department */}
@@ -198,7 +259,7 @@ const Profile = () => {
                   {user.badges.map((badge, index) => (
                     <span
                       key={index}
-                      className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 rounded-full text-sm font-medium"
+                      className="px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-full text-sm font-medium"
                     >
                       🏆 {badge}
                     </span>
@@ -207,12 +268,55 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Edit Button */}
-            <div className="mt-8 pt-8 border-t border-dark">
-              <button className="px-6 py-3 btn-primary-dark rounded-lg font-semibold transition">
-                Edit Profile (Coming Soon)
-              </button>
+            {isStudent && (
+              <div className="mt-8 pt-8 border-t border-dark">
+              <h3 className="text-lg font-semibold text-dark mb-4">
+                Health Considerations
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {HEALTH_CONSIDERATIONS_OPTIONS.map((option) => (
+                    <label
+                      key={option.value}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-secondary cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedConsiderations.includes(option.value)}
+                        onChange={() => handleCheckboxChange(option.value)}
+                        className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <span className="text-sm text-dark">
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-dark">
+                  Select all that apply to receive general wellness guidance.
+                </p>
+
+                {successMessage && (
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {successMessage}
+                  </p>
+                )}
+                {errorMessage && (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errorMessage}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white rounded-lg font-semibold transition disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Health Considerations'}
+                </button>
+              </form>
             </div>
+            )}
           </div>
         </main>
       </div>

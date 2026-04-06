@@ -6,8 +6,8 @@ const GoalCard = ({ goal }) => {
   // Determine color based on progress
   const getProgressColor = (progress) => {
     if (progress >= 80) return 'bg-green-500';
-    if (progress >= 50) return 'bg-yellow-500';
-    return 'bg-orange-500';
+    if (progress >= 50) return 'bg-green-300';
+    return 'bg-green-200';
   };
 
   const progressColor = getProgressColor(progressPercent);
@@ -16,8 +16,8 @@ const GoalCard = ({ goal }) => {
     <div className="card-dark rounded-lg p-4 hover:shadow-dark transition">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-primary-50 rounded-lg">
-            <Target className="w-5 h-5 text-primary-600" />
+          <div className="p-2 bg-green-50 rounded-lg">
+            <Target className="w-5 h-5 text-green-600" />
           </div>
           <div>
             <h4 className="font-semibold text-dark text-sm">
@@ -28,8 +28,13 @@ const GoalCard = ({ goal }) => {
             </p>
           </div>
         </div>
-        <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded">
+        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
           {goal.status}
+        </span>
+      </div>
+      <div className="mb-2">
+        <span className="text-[11px] font-medium px-2 py-1 rounded bg-gray-100 dark:bg-dark-hover text-muted-dark">
+          {goal.verificationType === 'confirmable' ? 'Confirmable' : 'Auto-verifiable'}
         </span>
       </div>
 
@@ -51,10 +56,12 @@ const GoalCard = ({ goal }) => {
 
       <div className="flex items-center justify-between text-xs text-muted-dark">
         <span>
-          {goal.currentValue} / {goal.targetValue} {goal.unit}
+          {goal.verificationType === 'confirmable'
+            ? 'Needs self-confirmation note'
+            : 'Auto-tracked from logs'}
         </span>
         {goal.points > 0 && (
-          <span className="flex items-center space-x-1 text-yellow-600">
+          <span className="flex items-center space-x-1 text-green-600">
             <TrendingUp className="w-3 h-3" />
             <span>{goal.points} pts</span>
           </span>

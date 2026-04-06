@@ -25,7 +25,26 @@ const GoogleFitConnect = ({ onDataFetched }) => {
   const handleConnect = async () => {
     setError(null);
     try {
-      await googleFit.requestAuthorization();
+      const code = await googleFit.requestAuthorization();
+
+      // Send code to backend
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/googlefit/link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ code })
+      });
+
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message);
+
+      if (result.access_token && result.expiry_date) {
+        localStorage.setItem('google_fit_token', result.access_token);
+        localStorage.setItem('google_fit_token_expiry', result.expiry_date);
+      }
+
       setConnected(true);
       // Auto-sync after connection
       setTimeout(() => handleSync(), 1000);
@@ -42,7 +61,7 @@ const GoogleFitConnect = ({ onDataFetched }) => {
       const data = await googleFit.getTodayData();
       setLastSync(new Date());
       setSyncedData(data);
-      
+
       // Pass data to parent component
       if (onDataFetched) {
         onDataFetched(data);
@@ -50,7 +69,7 @@ const GoogleFitConnect = ({ onDataFetched }) => {
     } catch (error) {
       console.error('Sync failed:', error);
       setError(error.message || 'Failed to sync data');
-      
+
       // If session expired, disconnect
       if (error.message?.includes('expired') || error.message?.includes('reconnect')) {
         setConnected(false);
@@ -69,10 +88,10 @@ const GoogleFitConnect = ({ onDataFetched }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800 p-5 mb-6">
+    <div className="bg-gradient-to-r from-green-50 to-green-50 dark:from-green-900/20 dark:to-green-900/20 rounded-xl border-2 border-green-200 dark:border-green-800 p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-500 rounded-lg">
+          <div className="p-2 bg-green-500 rounded-lg">
             <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -88,7 +107,7 @@ const GoogleFitConnect = ({ onDataFetched }) => {
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
             >
               {syncing ? (
                 <>
@@ -110,7 +129,7 @@ const GoogleFitConnect = ({ onDataFetched }) => {
         ) : (
           <button
             onClick={handleConnect}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-medium"
           >
             Connect Google Fit
           </button>
@@ -132,7 +151,7 @@ const GoogleFitConnect = ({ onDataFetched }) => {
             <Check className="w-4 h-4" />
             <span>Last synced: {lastSync.toLocaleTimeString()}</span>
           </div>
-          
+
           {/* Synced data preview */}
           {syncedData && (
             <div className="flex items-center space-x-4 text-muted-dark">

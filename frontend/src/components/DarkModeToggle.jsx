@@ -12,7 +12,7 @@ const DarkModeToggle = () => {
       aria-label="Toggle dark mode"
     >
       {darkMode ? (
-        <Sun className="w-5 h-5 text-yellow-400 animate-in spin-in-180 duration-500" />
+        <Sun className="w-5 h-5 text-green- animate-in spin-in-180 duration-500" />
       ) : (
         <Moon className="w-5 h-5 text-gray-700 animate-in spin-in-180 duration-500" />
       )}

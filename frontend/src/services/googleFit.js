@@ -33,9 +33,10 @@ class GoogleFitService {
     await this.initialize();
 
     return new Promise((resolve, reject) => {
-      this.tokenClient = google.accounts.oauth2.initTokenClient({
+      this.tokenClient = google.accounts.oauth2.initCodeClient({
         client_id: this.CLIENT_ID,
         scope: this.SCOPES.join(' '),
+        ux_mode: 'popup',
         callback: (response) => {
           if (response.error) {
             console.error('Auth error:', response);
@@ -43,17 +44,15 @@ class GoogleFitService {
             return;
           }
           
-          if (response.access_token) {
-            localStorage.setItem('google_fit_token', response.access_token);
-            // Store expiry time (tokens last 1 hour)
-            const expiryTime = new Date().getTime() + (response.expires_in * 1000);
-            localStorage.setItem('google_fit_token_expiry', expiryTime);
-            resolve(response);
+          if (response.code) {
+            // Revolve with the auth code to be sent to backend
+            resolve(response.code);
           }
         },
       });
 
-      this.tokenClient.requestAccessToken();
+      this.tokenClient.findAllAccountsWithScopes;
+      this.tokenClient.requestCode();
     });
   }
 

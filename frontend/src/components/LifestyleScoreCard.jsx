@@ -2,9 +2,9 @@ const LifestyleScoreCard = ({ score }) => {
   // Determine color based on score
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    if (score >= 40) return 'text-orange-600';
-    return 'text-red-600';
+    if (score >= 60) return 'text-green-';
+    if (score >= 40) return 'text-green-';
+    return 'text-green-';
   };
 
   const getScoreLabel = (score) => {
@@ -26,7 +26,7 @@ const LifestyleScoreCard = ({ score }) => {
       <h3 className="text-lg font-semibold text-dark mb-6">
         Today's Lifestyle Score
       </h3>
-      
+
       <div className="flex flex-col items-center">
         {/* Circular Progress */}
         <div className="relative w-48 h-48">
@@ -55,7 +55,7 @@ const LifestyleScoreCard = ({ score }) => {
               strokeLinecap="round"
             />
           </svg>
-          
+
           {/* Score in center */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className={`text-5xl font-bold ${scoreColor}`}>

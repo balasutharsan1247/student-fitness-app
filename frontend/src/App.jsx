@@ -12,6 +12,10 @@ import CreateGoal from './pages/CreateGoal';
 import GoalDetail from './pages/GoalDetail';
 import Statistics from './pages/Statistics';
 import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminRoles from './pages/AdminRoles';
+import MentorDashboard from './pages/MentorDashboard';
+import Leaderboard from './pages/Leaderboard';
 
 
 function App() {
@@ -45,6 +49,30 @@ function App() {
             element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/roles"
+            element={
+            <ProtectedRoute>
+              <AdminRoles />
+            </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mentor"
+            element={
+            <ProtectedRoute>
+              <MentorDashboard />
             </ProtectedRoute>
             }
           />
@@ -85,6 +113,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Statistics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
               </ProtectedRoute>
             }
           />

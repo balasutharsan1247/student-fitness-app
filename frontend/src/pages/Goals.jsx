@@ -98,7 +98,7 @@ const Goals = () => {
               </div>
               <Link
                 to="/goals/create"
-                className="flex items-center space-x-2 px-4 py-2 btn-primary-dark rounded-lg transition-colors duration-200 font-semibold"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 transition-colors duration-200 font-semibold"
               >
                 <Plus className="w-5 h-5" />
                 <span>Create Goal</span>
@@ -113,7 +113,7 @@ const Goals = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="card-dark rounded-xl shadow-dark p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <Target className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                  <Target className="w-8 h-8 text-green-500 dark:text-green-400" />
                   <span className="text-2xl font-bold text-dark">{stats.total}</span>
                 </div>
                 <p className="text-muted-dark text-sm font-medium">Total Goals</p>
@@ -121,7 +121,7 @@ const Goals = () => {
 
               <div className="card-dark rounded-xl shadow-dark p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <TrendingUp className="w-8 h-8 text-orange-500 dark:text-orange-400" />
+                  <TrendingUp className="w-8 h-8 text-green-500 dark:text-green-400" />
                   <span className="text-2xl font-bold text-dark">{stats.active}</span>
                 </div>
                 <p className="text-muted-dark text-sm font-medium">Active Goals</p>
@@ -140,7 +140,7 @@ const Goals = () => {
 
               <div className="card-dark rounded-xl shadow-dark p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <Award className="w-8 h-8 text-yellow-500 dark:text-yellow-400" />
+                  <Award className="w-8 h-8 text-green-500 dark:text-green-400" />
                   <span className="text-2xl font-bold text-dark">{stats.totalPointsEarned}</span>
                 </div>
                 <p className="text-muted-dark text-sm font-medium">Points Earned</p>
@@ -150,16 +150,16 @@ const Goals = () => {
 
           {/* Upcoming Deadlines Alert */}
           {stats?.upcomingDeadlines && stats.upcomingDeadlines.length > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
               <div className="flex items-start space-x-3">
-                <Calendar className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <Calendar className="w-5 h-5 text-green-500 dark:text-green-400 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-300 mb-2">
+                  <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
                     Upcoming Deadlines
                   </h3>
                   <div className="space-y-1">
                     {stats.upcomingDeadlines.map((deadline) => (
-                      <p key={deadline.goalId} className="text-sm text-yellow-800 dark:text-yellow-400">
+                      <p key={deadline.goalId} className="text-sm text-green-700 dark:text-green-300">
                         <span className="font-medium">{deadline.title}</span>
                         {' - '}
                         {deadline.daysRemaining === 0 ? 'Due today!' : `${deadline.daysRemaining} days left`}
@@ -173,16 +173,16 @@ const Goals = () => {
 
           {/* Overdue Goals Alert */}
           {stats?.overdueGoals && stats.overdueGoals.length > 0 && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
               <div className="flex items-start space-x-3">
-                <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+                <XCircle className="w-5 h-5 text-green-500 dark:text-green-400 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-red-900 dark:text-red-300 mb-2">
+                  <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
                     Overdue Goals
                   </h3>
                   <div className="space-y-1">
                     {stats.overdueGoals.map((overdue) => (
-                      <p key={overdue.goalId} className="text-sm text-red-800 dark:text-red-400">
+                      <p key={overdue.goalId} className="text-sm text-green-700 dark:text-green-300">
                         <span className="font-medium">{overdue.title}</span>
                         {' - '}
                         {overdue.daysOverdue} days overdue
@@ -212,7 +212,7 @@ const Goals = () => {
                     onClick={() => setFilter('all')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                       filter === 'all'
-                        ? 'bg-primary-500 dark:bg-primary-600 text-white'
+                        ? 'bg-green-500 dark:bg-green-600 text-white'
                         : 'bg-gray-100 dark:bg-dark-hover text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border'
                     }`}
                   >
@@ -222,7 +222,7 @@ const Goals = () => {
                     onClick={() => setFilter('active')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                       filter === 'active'
-                        ? 'bg-primary-500 dark:bg-primary-600 text-white'
+                        ? 'bg-green-500 dark:bg-green-600 text-white'
                         : 'bg-gray-100 dark:bg-dark-hover text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border'
                     }`}
                   >
@@ -232,7 +232,7 @@ const Goals = () => {
                     onClick={() => setFilter('completed')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                       filter === 'completed'
-                        ? 'bg-primary-500 dark:bg-primary-600 text-white'
+                        ? 'bg-green-500 dark:bg-green-600 text-white'
                         : 'bg-gray-100 dark:bg-dark-hover text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border'
                     }`}
                   >
@@ -242,7 +242,7 @@ const Goals = () => {
                     onClick={() => setFilter('abandoned')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                       filter === 'abandoned'
-                        ? 'bg-primary-500 dark:bg-primary-600 text-white'
+                        ? 'bg-green-500 dark:bg-green-600 text-white'
                         : 'bg-gray-100 dark:bg-dark-hover text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border'
                     }`}
                   >
@@ -293,7 +293,7 @@ const Goals = () => {
               </p>
               <Link
                 to="/goals/create"
-                className="inline-flex items-center space-x-2 px-6 py-3 btn-primary-dark rounded-lg transition-colors duration-200 font-semibold"
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 transition-colors duration-200 font-semibold"
               >
                 <Plus className="w-5 h-5" />
                 <span>Create Your First Goal</span>

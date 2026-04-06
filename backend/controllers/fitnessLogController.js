@@ -1,5 +1,15 @@
 const FitnessLog = require('../models/FitnessLog');
 const User = require('../models/User');
+const { calculateWorkoutData } = require('../services/workoutService');
+const { getNutritionData } = require('../services/nutritionService');
+
+const isLifestyleLogComplete = (logPayload) => {
+  const waterOk = Number(logPayload.waterIntake || 0) > 0;
+  const moodOk = !!logPayload.mood;
+  const stressOk = Number(logPayload.stressLevel || 0) >= 1;
+  const sleepQualityOk = !!logPayload.sleep?.quality;
+  return waterOk && moodOk && stressOk && sleepQualityOk;
+};
 
 // ==================== CREATE FITNESS LOG ====================
 
@@ -26,11 +36,59 @@ exports.createOrUpdateLog = async (req, res) => {
       mood,
       weight,
       notes,
+      source,
+      verificationStatus,
+      verificationNote,
     } = req.body;
 
     // Use provided date or default to today
     const logDate = date ? new Date(date) : new Date();
     logDate.setHours(0, 0, 0, 0); // Set to start of day
+
+    // Fetch user weight for calculations
+    const user = await User.findById(userId);
+    const userWeight = weight || user.weight || 70;
+
+    // Process Workouts (Automated Calorie Calculation)
+    let processedWorkouts = [];
+    let totalWorkoutCalories = 0;
+    if (workouts && Array.isArray(workouts)) {
+      for (const workout of workouts) {
+        const { type, duration } = workout;
+        if (type && duration) {
+          const calculated = await calculateWorkoutData({
+            type,
+            duration,
+            weight: userWeight
+          });
+          processedWorkouts.push({
+            ...workout,
+            intensity: calculated.intensity,
+            caloriesBurned: calculated.caloriesBurned,
+            notes: workout.notes || `Calculated via ${calculated.source}`
+          });
+          totalWorkoutCalories += calculated.caloriesBurned;
+        }
+      }
+    }
+
+    // Process Meals (Automated Calorie Calculation)
+    let processedMeals = [];
+    let totalMealCalories = 0;
+    if (meals && Array.isArray(meals)) {
+      for (const meal of meals) {
+        const { description } = meal;
+        if (description) {
+          const nutrition = await getNutritionData(description);
+          processedMeals.push({
+            ...meal,
+            calories: nutrition.calories,
+            healthRating: nutrition.healthRating || 3
+          });
+          totalMealCalories += nutrition.calories;
+        }
+      }
+    }
 
     // Check if log already exists for this date
     let fitnessLog = await FitnessLog.findOne({
@@ -43,21 +101,36 @@ exports.createOrUpdateLog = async (req, res) => {
       fitnessLog.steps = steps !== undefined ? steps : fitnessLog.steps;
       fitnessLog.distance = distance !== undefined ? distance : fitnessLog.distance;
       fitnessLog.activeMinutes = activeMinutes !== undefined ? activeMinutes : fitnessLog.activeMinutes;
-      fitnessLog.caloriesBurned = caloriesBurned !== undefined ? caloriesBurned : fitnessLog.caloriesBurned;
-      fitnessLog.workouts = workouts !== undefined ? workouts : fitnessLog.workouts;
+      fitnessLog.caloriesBurned = totalWorkoutCalories || (caloriesBurned !== undefined ? caloriesBurned : fitnessLog.caloriesBurned);
+      fitnessLog.workouts = processedWorkouts.length > 0 ? processedWorkouts : (workouts !== undefined ? workouts : fitnessLog.workouts);
       fitnessLog.sleep = sleep !== undefined ? sleep : fitnessLog.sleep;
-      fitnessLog.meals = meals !== undefined ? meals : fitnessLog.meals;
-      fitnessLog.totalCaloriesConsumed = totalCaloriesConsumed !== undefined ? totalCaloriesConsumed : fitnessLog.totalCaloriesConsumed;
+      fitnessLog.meals = processedMeals.length > 0 ? processedMeals : (meals !== undefined ? meals : fitnessLog.meals);
+      fitnessLog.totalCaloriesConsumed = totalMealCalories || (totalCaloriesConsumed !== undefined ? totalCaloriesConsumed : fitnessLog.totalCaloriesConsumed);
       fitnessLog.waterIntake = waterIntake !== undefined ? waterIntake : fitnessLog.waterIntake;
       fitnessLog.screenTime = screenTime !== undefined ? screenTime : fitnessLog.screenTime;
       fitnessLog.stressLevel = stressLevel !== undefined ? stressLevel : fitnessLog.stressLevel;
       fitnessLog.stressFactors = stressFactors !== undefined ? stressFactors : fitnessLog.stressFactors;
       fitnessLog.mood = mood !== undefined ? mood : fitnessLog.mood;
-      fitnessLog.weight = weight !== undefined ? weight : fitnessLog.weight;
+      fitnessLog.weight = userWeight;
       fitnessLog.notes = notes !== undefined ? notes : fitnessLog.notes;
 
+      // Only admins/mentors should be able to set trusted verification states.
+      if (source !== undefined && source === 'manual') {
+        fitnessLog.source = source;
+      }
+      if (
+        verificationStatus !== undefined &&
+        verificationStatus === 'self_reported'
+      ) {
+        fitnessLog.verificationStatus = verificationStatus;
+      }
+      if (verificationNote !== undefined) {
+        fitnessLog.verificationNote = verificationNote;
+      }
+      fitnessLog.lifestyleLogCompleted = isLifestyleLogComplete(fitnessLog);
+
       // Calculate lifestyle score
-      fitnessLog.calculateLifestyleScore();
+      await fitnessLog.calculateLifestyleScore();
 
       await fitnessLog.save();
 
@@ -74,22 +147,34 @@ exports.createOrUpdateLog = async (req, res) => {
         steps,
         distance,
         activeMinutes,
-        caloriesBurned,
-        workouts,
+        caloriesBurned: totalWorkoutCalories || caloriesBurned,
+        workouts: processedWorkouts,
         sleep,
-        meals,
-        totalCaloriesConsumed,
+        meals: processedMeals,
+        totalCaloriesConsumed: totalMealCalories || totalCaloriesConsumed,
         waterIntake,
         screenTime,
         stressLevel,
         stressFactors,
         mood,
-        weight,
+        weight: userWeight,
         notes,
+        source: source === 'manual' ? source : 'manual',
+        verificationStatus:
+          verificationStatus === 'self_reported'
+            ? verificationStatus
+            : 'self_reported',
+        verificationNote,
+        lifestyleLogCompleted: isLifestyleLogComplete({
+          waterIntake,
+          mood,
+          stressLevel,
+          sleep,
+        }),
       });
 
       // Calculate lifestyle score
-      fitnessLog.calculateLifestyleScore();
+      await fitnessLog.calculateLifestyleScore();
       await fitnessLog.save();
 
       res.status(201).json({
@@ -100,7 +185,7 @@ exports.createOrUpdateLog = async (req, res) => {
     }
   } catch (error) {
     console.error('Create/Update Log Error:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
@@ -125,11 +210,11 @@ exports.createOrUpdateLog = async (req, res) => {
 exports.getTodayLog = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Get start and end of today
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
@@ -319,6 +404,9 @@ exports.updateLog = async (req, res) => {
     // Update fields
     const updateFields = { ...req.body };
     delete updateFields.user; // Don't allow changing the owner
+    delete updateFields.source;
+    delete updateFields.verificationStatus;
+    delete updateFields.verifiedAt;
 
     Object.keys(updateFields).forEach((key) => {
       fitnessLog[key] = updateFields[key];
@@ -336,7 +424,7 @@ exports.updateLog = async (req, res) => {
     });
   } catch (error) {
     console.error('Update Log Error:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
@@ -443,7 +531,7 @@ exports.getWeeklyStats = async (req, res) => {
         stats.averageWaterIntake += log.waterIntake || 0;
         stats.averageSleepHours += log.sleep?.hours || 0;
         stats.averageLifestyleScore += log.lifestyleScore || 0;
-        
+
         if (log.workouts && log.workouts.length > 0) {
           stats.workoutDays++;
         }
@@ -532,7 +620,7 @@ exports.getMonthlyStats = async (req, res) => {
         stats.averageWaterIntake += log.waterIntake || 0;
         stats.averageSleepHours += log.sleep?.hours || 0;
         stats.averageLifestyleScore += log.lifestyleScore || 0;
-        
+
         if (log.workouts && log.workouts.length > 0) {
           stats.workoutDays++;
         }
@@ -592,7 +680,7 @@ exports.getDashboard = async (req, res) => {
     // Get today's log
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const todayLog = await FitnessLog.findOne({
       user: userId,
       date: { $gte: today },
@@ -608,6 +696,12 @@ exports.getDashboard = async (req, res) => {
       date: { $gte: weekAgo },
     }).sort({ date: 1 });
 
+    const verifiedWeekLogs = weekLogs.filter(
+      (log) =>
+        log.verificationStatus === 'system_verified' ||
+        log.verificationStatus === 'mentor_verified'
+    );
+
     // Calculate week average
     let weekAverageScore = 0;
     if (weekLogs.length > 0) {
@@ -615,13 +709,29 @@ exports.getDashboard = async (req, res) => {
       weekAverageScore = Math.round(totalScore / weekLogs.length);
     }
 
+    // Extract recent mentor notes from the last 7 days Logs
+    let recentNotes = [];
+    weekLogs.forEach(log => {
+      if (log.mentorNotes && log.mentorNotes.length > 0) {
+        log.mentorNotes.forEach(note => {
+          recentNotes.push({
+            content: note.content,
+            date: note.date,
+            logDate: log.date
+          });
+        });
+      }
+    });
+    // sort recentNotes by date descending
+    recentNotes.sort((a, b) => new Date(b.date) - new Date(a.date));
+
     // Build dashboard data
     const dashboard = {
       user: {
         name: `${user.firstName} ${user.lastName}`,
-        level: user.level,
         points: user.points,
-        badges: user.badges,
+        level: user.level || Math.floor((user.points || 0) / 500) + 1,
+        currentStreak: user.currentStreak,
       },
       today: todayLog ? {
         steps: todayLog.steps,
@@ -634,15 +744,21 @@ exports.getDashboard = async (req, res) => {
         lifestyleScore: todayLog.lifestyleScore,
         workouts: todayLog.workouts?.length || 0,
         mood: todayLog.mood,
+        source: todayLog.source || 'manual',
+        verificationStatus: todayLog.verificationStatus || 'self_reported',
+        pointsEarnedToday: todayLog.pointsEarnedToday || 0,
       } : null,
       weekSummary: {
         averageScore: weekAverageScore,
         activeDays: weekLogs.length,
+        verifiedDays: verifiedWeekLogs.length,
         trend: weekLogs.map(log => ({
           date: log.date,
           score: log.lifestyleScore,
+          verificationStatus: log.verificationStatus,
         })),
       },
+      recentNotes: recentNotes
     };
 
     res.status(200).json({

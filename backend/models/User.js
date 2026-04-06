@@ -1,6 +1,17 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const HEALTH_CONSIDERATIONS = [
+  'breathing_issues',
+  'heart_restriction',
+  'joint_pain',
+  'diabetes_concern',
+  'doctor_exercise_limit',
+  'dietary_restriction',
+  'vegetarian',
+  'vegan',
+];
+
 // Define the User Schema (structure of user data)
 const userSchema = new mongoose.Schema(
   {
@@ -35,11 +46,39 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // Student information
+    // Google Fit Integration
+    googleAccessToken: {
+      type: String,
+      select: false,
+    },
+    googleRefreshToken: {
+      type: String,
+      select: false,
+    },
+    isGoogleFitConnected: {
+      type: Boolean,
+      default: false,
+    },
+    googleFitSyncEnabled: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Role-specific account identifiers
     studentId: {
       type: String,
-      unique: true,
-      sparse: true,
+      default: undefined,
+      set: (value) => (value === null ? undefined : value),
+    },
+    mentorId: {
+      type: String,
+      default: undefined,
+      set: (value) => (value === null ? undefined : value),
+    },
+    adminId: {
+      type: String,
+      default: undefined,
+      set: (value) => (value === null ? undefined : value),
     },
     university: {
       type: String,
@@ -71,6 +110,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
     },
+    healthConsiderations: {
+      type: [String],
+      enum: HEALTH_CONSIDERATIONS,
+      default: [],
+    },
     height: {
       type: Number,
       min: [0, 'Height must be positive'],
@@ -79,6 +123,31 @@ const userSchema = new mongoose.Schema(
       type: Number,
       min: [0, 'Weight must be positive'],
     },
+
+    // Mentor Assignment
+    // For students: reference to the mentor they are assigned to
+    assignedMentor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    // For mentors: list of students they supervise (denormalized for fast lookup)
+    assignedStudents: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+
+    // Encouragement Messages (stored persistently so students can see them)
+    encouragementMessages: [
+      {
+        from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        message: { type: String, trim: true },
+        read: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
 
     // Fitness Goals
     fitnessGoals: {
@@ -109,16 +178,24 @@ const userSchema = new mongoose.Schema(
     level: {
       type: Number,
       default: 1,
+      min: 1,
     },
-    badges: {
-      type: [String],
-      default: [],
+    currentStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastLogDate: {
+      type: Date,
+    },
+    weeklyAdherenceBonusWeek: {
+      type: String,
+      default: '',
     },
 
     // Account Status
     role: {
       type: String,
-      enum: ['student', 'admin', 'educator'],
+      enum: ['student', 'admin', 'mentor'],
       default: 'student',
     },
     isActive: {
@@ -132,6 +209,20 @@ const userSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+);
+
+// Ensure unique role IDs only for documents that actually have an ID value
+userSchema.index(
+  { studentId: 1 },
+  {partialFilterExpression: { studentId: { $exists: true, $ne: null } } }
+);
+userSchema.index(
+  { mentorId: 1 },
+  { partialFilterExpression: { mentorId: { $exists: true, $ne: null } } }
+);
+userSchema.index(
+  { adminId: 1 },
+  { partialFilterExpression: { adminId: { $exists: true, $ne: null } } }
 );
 
 // ==================== MIDDLEWARE ====================
@@ -157,35 +248,6 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Check and update user level based on points
-userSchema.methods.updateLevel = function () {
-  let calculatedLevel = 1;
-  
-  if (this.points >= 500) {
-    calculatedLevel = 2 + Math.floor((this.points - 500) / 125);
-  }
-  
-  if (calculatedLevel > this.level) {
-    this.level = calculatedLevel;
-    return true; // Leveled up
-  }
-  
-  return false; // No level change
-};
-
-// Get points needed for next level
-userSchema.methods.getPointsToNextLevel = function () {
-  let pointsForNextLevel;
-  
-  if (this.level === 1) {
-    pointsForNextLevel = 500; // Need 500 to reach level 2
-  } else {
-    // After level 2, need 125 points per level
-    pointsForNextLevel = 500 + ((this.level - 1) * 125);
-  }
-  
-  return pointsForNextLevel - this.points;
-};
 
 // Method to get public profile (without sensitive info)
 userSchema.methods.getPublicProfile = function () {

@@ -29,7 +29,11 @@ import {
   Droplets,
   Dumbbell,
   UtensilsCrossed,
+  Sparkles,
+  AlertTriangle,
+  Download
 } from 'lucide-react';
+import { generateInsights } from '../utils/insightEngine';
 
 const Statistics = () => {
   const { user } = useAuth();
@@ -45,6 +49,7 @@ const Statistics = () => {
     categoryBreakdown: [],
     workoutBreakdown: [],
     nutritionSummary: {},
+    aiInsights: [],
   });
 
   useEffect(() => {
@@ -91,8 +96,15 @@ const Statistics = () => {
     const sortedLogs = logs.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Overview stats
+    const verifiedLogs = sortedLogs.filter(
+      (log) =>
+        log.verificationStatus === 'system_verified' ||
+        log.verificationStatus === 'mentor_verified'
+    );
+
     const overview = {
       totalLogs: sortedLogs.length,
+      verifiedLogs: verifiedLogs.length,
       totalSteps: sortedLogs.reduce((sum, log) => sum + (log.steps || 0), 0),
       totalCaloriesBurned: sortedLogs.reduce((sum, log) => sum + (log.caloriesBurned || 0), 0),
       totalCaloriesConsumed: sortedLogs.reduce((sum, log) => sum + (log.totalCaloriesConsumed || 0), 0),
@@ -170,6 +182,12 @@ const Statistics = () => {
       averageDaily: sortedLogs.length > 0 ? Math.round(overview.totalCaloriesConsumed / sortedLogs.length) : 0,
     };
 
+    // Generate AI Insights
+    let aiInsights = [];
+    if (sortedLogs.length > 0) {
+      aiInsights = generateInsights(sortedLogs);
+    }
+
     setStats({
       overview,
       activityTrend,
@@ -178,6 +196,7 @@ const Statistics = () => {
       categoryBreakdown,
       workoutBreakdown,
       nutritionSummary,
+      aiInsights,
     });
   };
 
@@ -217,19 +236,19 @@ const Statistics = () => {
   }
 
   // Colors for charts (different colors for each item)
-  const CHART_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
+  const CHART_COLORS = ['#10b981', '#22c55e', '#16a34a', '#4d7c0f', '#14532d'];
 
 // Get color for activity metric
 const getActivityMetricColor = (metric) => {
   const colors = {
-    steps: '#0ea5e9',
-    calories: '#f59e0b',
-    sleep: '#8b5cf6',
-    water: '#06b6d4',
-    activeMinutes: '#10b981',
-    distance: '#ec4899',
+    steps: '#10b981',
+    calories: '#22c55e',
+    sleep: '#4ade80',
+    water: '#2dd4bf',
+    activeMinutes: '#16a34a',
+    distance: '#15803d',
   };
-  return colors[metric] || '#6b7280';
+  return colors[metric] || '#16a34a';
 };
 
 // Get name for activity metric
@@ -245,6 +264,41 @@ const getActivityMetricName = (metric) => {
   return names[metric] || metric;
 };
 
+// Handle CSV Download
+const handleDownloadCSV = () => {
+  if (!stats.activityTrend || stats.activityTrend.length === 0) return;
+
+  // Build CSV string
+  const headers = ['Date', 'Steps', 'Calories Burned', 'Sleep (Hours)', 'Water (Liters)', 'Active Minutes', 'Distance (km)', 'Lifestyle Score'];
+  const rows = stats.activityTrend.map((log, index) => {
+    // We fetch the corresponding lifestyle score since it's stored in a separate array
+    const scoreLog = stats.lifestyleScoreTrend[index];
+    return [
+      log.date,
+      log.steps,
+      log.calories,
+      log.sleep,
+      log.water,
+      log.activeMinutes,
+      log.distance,
+      scoreLog ? scoreLog.score : 0
+    ].join(',');
+  });
+
+  const csvContent = [headers.join(','), ...rows].join('\n');
+  
+  // Create Blob and Download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `wellness_report_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
@@ -258,27 +312,79 @@ const getActivityMetricName = (metric) => {
               </p>
             </div>
 
-            {/* Time Period Selector */}
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-dark">Period:</label>
-              <select
-                value={timePeriod}
-                onChange={(e) => setTimePeriod(e.target.value)}
-                className="px-4 py-2 border border-dark select-dark rounded-lg outline-none"
+            {/* Actions: Time Period & Export */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-dark">Period:</label>
+                <select
+                  value={timePeriod}
+                  onChange={(e) => setTimePeriod(e.target.value)}
+                  className="px-4 py-2 border border-dark select-dark rounded-lg outline-none"
+                >
+                  <option value="7">Last 7 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="90">Last 90 Days</option>
+                  <option value="all">All Time</option>
+                </select>
+              </div>
+              <button
+                onClick={handleDownloadCSV}
+                className="flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                title="Download CSV Report"
               >
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 90 Days</option>
-                <option value="all">All Time</option>
-              </select>
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
             </div>
           </div>
+
+          {/* AI Wellness Insights */}
+          {stats.aiInsights && stats.aiInsights.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-dark mb-4 flex items-center">
+                <Sparkles className="w-6 h-6 mr-2 text-primary-500" />
+                AI Wellness Insights
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {stats.aiInsights.map((insight, idx) => {
+                  let bgColor = "bg-primary-50 dark:bg-primary-900/20";
+                  let borderColor = "border-primary-200 dark:border-primary-800";
+                  let titleColor = "text-primary-800 dark:text-primary-300";
+                  let Icon = Sparkles;
+                  let iconColor = "text-primary-500";
+
+                  if (insight.type === 'positive') {
+                    bgColor = "bg-green-50 dark:bg-green-900/20";
+                    borderColor = "border-green-200 dark:border-green-800";
+                    titleColor = "text-green-800 dark:text-green-300";
+                    iconColor = "text-green-500";
+                  } else if (insight.type === 'warning') {
+                    bgColor = "bg-green-100 dark:bg-green-900/20";
+                    borderColor = "border-green-200 dark:border-green-800";
+                    titleColor = "text-green-800 dark:text-green-300";
+                    Icon = AlertTriangle;
+                    iconColor = "text-green-500";
+                  }
+
+                  return (
+                    <div key={idx} className={`${bgColor} border ${borderColor} rounded-xl p-5 shadow-sm`}>
+                      <div className="flex items-center mb-3">
+                        <Icon className={`w-5 h-5 mr-2 ${iconColor}`} />
+                        <h3 className={`font-bold ${titleColor}`}>{insight.title || "Observation"}</h3>
+                      </div>
+                      <p className="text-sm text-dark">{insight.message}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Overview Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
-                <Activity className="w-8 h-8 text-blue-500" />
+                <Activity className="w-8 h-8 text-green-500" />
                 <span className="text-2xl font-bold text-dark">
                   {stats.overview.totalLogs}
                 </span>
@@ -298,7 +404,7 @@ const getActivityMetricName = (metric) => {
 
             <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
-                <Target className="w-8 h-8 text-purple-500" />
+                <Target className="w-8 h-8 text-green-500" />
                 <span className="text-2xl font-bold text-dark">
                   {stats.goalStats?.completed || 0}
                 </span>
@@ -308,7 +414,7 @@ const getActivityMetricName = (metric) => {
 
             <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-2">
-                <Award className="w-8 h-8 text-yellow-500" />
+                <Award className="w-8 h-8 text-green-500" />
                 <span className="text-2xl font-bold text-dark">
                   {user?.points || 0}
                 </span>
@@ -316,6 +422,10 @@ const getActivityMetricName = (metric) => {
               <p className="text-muted-dark text-sm font-medium">Total Points Earned</p>
             </div>
           </div>
+
+          <p className="text-sm text-muted-dark mb-8">
+            Data trust: {stats.overview.verifiedLogs || 0} verified logs out of {stats.overview.totalLogs || 0} total logs in this period.
+          </p>
 
           {/* Activity Trends Chart with Metric Selection */}
           <div className="card-dark rounded-xl shadow-dark p-6 mb-8">
@@ -413,7 +523,7 @@ const getActivityMetricName = (metric) => {
             <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-dark flex items-center">
-                  <Dumbbell className="w-5 h-5 mr-2 text-orange-500" />
+                  <Dumbbell className="w-5 h-5 mr-2 text-green-500" />
                   Workout Analysis
                 </h3>
                 <select
@@ -477,7 +587,7 @@ const getActivityMetricName = (metric) => {
             {/* Goal Categories Breakdown */}
             <div className="card-dark rounded-xl shadow-dark p-6">
               <h3 className="text-lg font-semibold text-dark mb-6 flex items-center">
-                <Target className="w-5 h-5 mr-2 text-purple-500" />
+                <Target className="w-5 h-5 mr-2 text-green-500" />
                 Goal Categories
               </h3>
               {stats.categoryBreakdown.length > 0 ? (
@@ -535,8 +645,8 @@ const getActivityMetricName = (metric) => {
                     <span
                       className={`font-bold ${
                         stats.nutritionSummary.netCalories > 0
-                          ? 'text-orange-600'
-                          : 'text-green-600'
+                          ? 'text-green-600'
+                          : 'text-red-600'
                       }`}
                     >
                       {stats.nutritionSummary.netCalories > 0 ? '+' : ''}
@@ -550,7 +660,7 @@ const getActivityMetricName = (metric) => {
             {/* Sleep Summary */}
             <div className="card-dark rounded-xl shadow-dark p-6">
               <h3 className="text-lg font-semibold text-dark mb-4 flex items-center">
-                <Moon className="w-5 h-5 mr-2 text-indigo-500" />
+                <Moon className="w-5 h-5 mr-2 text-green-500" />
                 Sleep
               </h3>
               <div className="space-y-3">
@@ -572,7 +682,7 @@ const getActivityMetricName = (metric) => {
             {/* Hydration Summary */}
             <div className="card-dark rounded-xl shadow-dark p-6">
               <h3 className="text-lg font-semibold text-dark mb-4 flex items-center">
-                <Droplets className="w-5 h-5 mr-2 text-cyan-500" />
+                <Droplets className="w-5 h-5 mr-2 text-green-500" />
                 Hydration
               </h3>
               <div className="space-y-3">
@@ -605,7 +715,7 @@ const getActivityMetricName = (metric) => {
                 <p className="text-sm text-muted-dark mt-1">Total Goals</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">
+                <p className="text-3xl font-bold text-green-600">
                   {stats.goalStats?.active || 0}
                 </p>
                 <p className="text-sm text-muted-dark mt-1">Active</p>
@@ -623,7 +733,7 @@ const getActivityMetricName = (metric) => {
                 <p className="text-sm text-muted-dark mt-1">Abandoned</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-purple-600">
+                <p className="text-3xl font-bold text-green-600">
                   {stats.goalStats?.completionRate || 0}%
                 </p>
                 <p className="text-sm text-muted-dark mt-1">Success Rate</p>

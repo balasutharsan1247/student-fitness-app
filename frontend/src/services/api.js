@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL for your backend API
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -70,6 +70,10 @@ export const authService = {
   // Update password
   updatePassword: async (passwordData) => {
     const response = await api.put('/auth/updatepassword', passwordData);
+    return response.data;
+  },
+  markMessagesRead: async () => {
+    const response = await api.put('/auth/messages/read');
     return response.data;
   },
 
@@ -199,8 +203,8 @@ export const goalService = {
   },
 
   // Complete goal
-  completeGoal: async (goalId) => {
-    const response = await api.put(`/goals/${goalId}/complete`);
+  completeGoal: async (goalId, payload = {}) => {
+    const response = await api.put(`/goals/${goalId}/complete`, payload);
     return response.data;
   },
 
@@ -223,13 +227,96 @@ export const goalService = {
   },
 };
 
-const getBaseURL = () => {
-  const hostname = window.location.hostname;
-  // If accessing via sslip.io, point the API to the same IP at port 5000
-  if (hostname.includes('sslip.io')) {
-    return `http://${hostname.replace(':5173', '')}:5000/api`;
-  }
-  return 'http://localhost:5000/api';
+// ==================== ADMIN SERVICES ====================
+
+export const adminService = {
+  // Get aggregate stats
+  getAggregateStats: async () => {
+    const response = await api.get('/admin/aggregate-stats');
+    return response.data;
+  },
+  // User management
+  getUsers: async () => {
+    const response = await api.get('/admin/users');
+    return response.data;
+  },
+  createUser: async (userData) => {
+    const response = await api.post('/admin/users', userData);
+    return response.data;
+  },
+  updateUser: async (userId, userData) => {
+    const response = await api.put(`/admin/users/${userId}`, userData);
+    return response.data;
+  },
+  deleteUser: async (userId) => {
+    const response = await api.delete(`/admin/users/${userId}`);
+    return response.data;
+  },
+  // Mentor assignment
+  getMentors: async () => {
+    const response = await api.get('/admin/mentors');
+    return response.data;
+  },
+  assignStudents: async (mentorId, studentIds) => {
+    const response = await api.put(`/admin/mentors/${mentorId}/assign`, { studentIds });
+    return response.data;
+  },
+  unassignStudent: async (mentorId, studentId) => {
+    const response = await api.delete(`/admin/mentors/${mentorId}/students/${studentId}`);
+    return response.data;
+  },
 };
+
+// ==================== MENTOR SERVICES ====================
+
+export const mentorService = {
+  // Get assigned students (basic profile only)
+  getStudents: async () => {
+    const response = await api.get('/mentor/students');
+    return response.data;
+  },
+
+  // Privacy-safe student summary (no raw logs)
+  getStudentSummary: async (studentId) => {
+    const response = await api.get(`/mentor/student/${studentId}/summary`);
+    return response.data;
+  },
+
+  // Batch/department-level aggregate trends
+  getBatchTrends: async () => {
+    const response = await api.get('/mentor/batch-trends');
+    return response.data;
+  },
+
+  // Anonymized top performers
+  getTopPerformers: async () => {
+    const response = await api.get('/mentor/top-performers');
+    return response.data;
+  },
+
+  // Send persistent encouragement message
+  sendMessage: async (studentId, message) => {
+    const response = await api.post(`/mentor/message/${studentId}`, { message });
+    return response.data;
+  },
+
+  // Add coaching note to a log
+  addMentorNote: async (logId, content) => {
+    const response = await api.post(`/mentor/log/${logId}/note`, { content });
+    return response.data;
+  },
+};
+
+// ==================== LEADERBOARD SERVICES ====================
+
+export const leaderboardService = {
+  // Get campus leaderboard rankings
+  getLeaderboard: async () => {
+    const response = await api.get('/leaderboard');
+    return response.data;
+  },
+};
+
+
 
 export default api;

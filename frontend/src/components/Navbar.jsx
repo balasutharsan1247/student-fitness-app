@@ -12,7 +12,11 @@ import {
   Menu,
   X,
   Moon,
-  Sun
+  Sun,
+  Users,
+  ClipboardList,
+  Trophy,
+  ShieldCheck
 } from 'lucide-react';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -24,6 +28,7 @@ const Navbar = () => {
   const { user, logout, refreshUser } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isStudent = user?.role === 'student';
 
   // Auto-refresh user data every 5 seconds
   useEffect(() => {
@@ -39,33 +44,70 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const navItems = [
+  const navItems = [];
+
+  if (user?.role === 'student') {
+    navItems.push(
+      {
+        name: 'Dashboard',
+        path: '/dashboard',
+        icon: LayoutDashboard,
+      },
+      {
+        name: 'Log Activity',
+        path: '/log-activity',
+        icon: PlusCircle,
+      },
+      {
+        name: 'Goals',
+        path: '/goals',
+        icon: Target,
+      },
+      {
+        name: 'Statistics',
+        path: '/statistics',
+        icon: TrendingUp,
+      }
+    );
+  }
+
+  // Everyone sees Leaderboard and Profile
+  navItems.push(
     {
-      name: 'Dashboard',
-      path: '/dashboard',
-      icon: LayoutDashboard,
-    },
-    {
-      name: 'Log Activity',
-      path: '/log-activity',
-      icon: PlusCircle,
-    },
-    {
-      name: 'Goals',
-      path: '/goals',
-      icon: Target,
-    },
-    {
-      name: 'Statistics',
-      path: '/statistics',
-      icon: TrendingUp,
+      name: 'Leaderboard',
+      path: '/leaderboard',
+      icon: Trophy,
     },
     {
       name: 'Profile',
       path: '/profile',
       icon: User,
-    },
-  ];
+    }
+  );
+
+  if (user?.role === 'admin' || user?.role === 'mentor') {
+    navItems.push({
+      name: 'Campus Analytics',
+      path: '/admin',
+      icon: Users,
+    });
+  }
+
+  if (user?.role === 'admin') {
+    navItems.push({
+      name: 'Roles',
+      path: '/admin/roles',
+      icon: ShieldCheck,
+    });
+  }
+
+  if (user?.role === 'mentor') {
+    navItems.push({
+      name: 'Mentorship',
+      path: '/mentor',
+      icon: ClipboardList,
+    });
+  }
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -77,7 +119,7 @@ const Navbar = () => {
       <header className="lg:hidden bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border sticky top-0 z-50 transition-colors duration-200">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
-            <div className="bg-primary-500 dark:bg-primary-600 p-2 rounded-lg">
+            <div className="bg-green-500 dark:bg-green-600 p-2 rounded-lg">
               <Activity className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -96,7 +138,7 @@ const Navbar = () => {
               aria-label="Toggle dark mode"
             >
               {darkMode ? (
-                <Sun className="w-5 h-5 text-yellow-400" />
+                <Sun className="w-5 h-5 text-green-" />
               ) : (
                 <Moon className="w-5 h-5 text-gray-600" />
               )}
@@ -131,7 +173,7 @@ const Navbar = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
                       active
-                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                        ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                         : 'text-gray-700 dark:text-dark-muted hover:bg-gray-100 dark:hover:bg-dark-hover'
                     }`}
                   >
@@ -143,7 +185,7 @@ const Navbar = () => {
 
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-green- dark:text-green- hover:bg-green- dark:hover:bg-green-/20 transition-colors duration-200"
               >
                 <LogOut className="w-5 h-5" />
                 <span className="font-medium">Logout</span>
@@ -151,24 +193,26 @@ const Navbar = () => {
             </nav>
 
             {/* User Stats (Mobile) */}
-            <div className="px-4 py-3 border-t border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg">
-              <div className="flex items-center justify-around">
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-1 text-yellow-600 dark:text-yellow-400 mb-1">
-                    <Award className="w-4 h-4" />
-                    <span className="font-bold">{user?.points || 0}</span>
+            {isStudent && (
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg">
+                <div className="flex items-center justify-around">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center space-x-1 text-green- dark:text-green- mb-1">
+                      <Award className="w-4 h-4" />
+                      <span className="font-bold">{user?.points || 0}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-dark-muted">Points</p>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-dark-muted">Points</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-1 text-purple-600 dark:text-purple-400 mb-1">
-                    <TrendingUp className="w-4 h-4" />
-                    <span className="font-bold">{user?.level || 1}</span>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center space-x-1 text-green-600 dark:text-green-400 mb-1">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="font-bold">{user?.level || 1}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-dark-muted">Level</p>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-dark-muted">Level</p>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </header>
@@ -177,7 +221,7 @@ const Navbar = () => {
       <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white dark:bg-dark-card border-r border-gray-200 dark:border-dark-border transition-colors duration-200">
         {/* Logo */}
         <div className="flex items-center space-x-3 px-6 py-6 border-b border-gray-200 dark:border-dark-border">
-          <div className="bg-primary-500 dark:bg-primary-600 p-2 rounded-lg">
+          <div className="bg-green-500 dark:bg-green-600 p-2 rounded-lg">
             <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -189,7 +233,7 @@ const Navbar = () => {
         {/* User Info */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 dark:from-primary-500 dark:to-primary-700 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-lg">
                 {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
               </span>
@@ -205,23 +249,25 @@ const Navbar = () => {
           </div>
 
           {/* Points & Level */}
-          <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-1 text-yellow-600 dark:text-yellow-400 mb-1">
-                <Award className="w-4 h-4" />
-                <span className="font-bold text-lg">{user?.points || 0}</span>
+          {isStudent && (
+            <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-1 text-green- dark:text-green- mb-1">
+                  <Award className="w-4 h-4" />
+                  <span className="font-bold text-lg">{user?.points || 0}</span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-dark-muted">Points</p>
               </div>
-              <p className="text-xs text-gray-600 dark:text-dark-muted">Points</p>
-            </div>
-            <div className="h-8 w-px bg-gray-200 dark:bg-dark-border"></div>
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-1 text-purple-600 dark:text-purple-400 mb-1">
-                <TrendingUp className="w-4 h-4" />
-                <span className="font-bold text-lg">{user?.level || 1}</span>
+              <div className="h-8 w-px bg-gray-200 dark:bg-dark-border"></div>
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-1 text-green-600 dark:text-green-400 mb-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="font-bold text-lg">{user?.level || 1}</span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-dark-muted">Level</p>
               </div>
-              <p className="text-xs text-gray-600 dark:text-dark-muted">Level</p>
             </div>
-          </div>
+          )}
 
           {/* Dark Mode Toggle (Desktop) */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
@@ -231,7 +277,7 @@ const Navbar = () => {
             >
               {darkMode ? (
                 <>
-                  <Sun className="w-4 h-4 text-yellow-500" />
+                  <Sun className="w-4 h-4 text-green-" />
                   <span className="text-sm font-medium text-gray-900 dark:text-dark-text">Light Mode</span>
                 </>
               ) : (
@@ -256,7 +302,7 @@ const Navbar = () => {
                 to={item.path}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
                   active
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                     : 'text-gray-700 dark:text-dark-muted hover:bg-gray-100 dark:hover:bg-dark-hover'
                 }`}
               >
@@ -271,7 +317,7 @@ const Navbar = () => {
         <div className="px-4 py-4 border-t border-gray-200 dark:border-dark-border">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-semibold"
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-semibold"
           >
             <LogOut className="w-5 h-5" />
             <span>Logout</span>

@@ -17,8 +17,10 @@ const CreateGoal = () => {
     title: '',
     description: '',
     category: '',
+    metricType: 'steps',
+    goalMode: 'daily',
+    verificationType: 'auto_verifiable',
     targetValue: '',
-    currentValue: '',
     unit: '',
     targetDate: '',
     motivationQuote: '',
@@ -54,8 +56,10 @@ const CreateGoal = () => {
         title: formData.title,
         description: formData.description || undefined,
         category: formData.category,
+        metricType: formData.metricType,
+        goalMode: formData.goalMode,
+        verificationType: formData.verificationType,
         targetValue: parseFloat(formData.targetValue),
-        currentValue: formData.currentValue ? parseFloat(formData.currentValue) : 0,
         unit: formData.unit,
         targetDate: formData.targetDate,
         motivationQuote: formData.motivationQuote || undefined,
@@ -67,15 +71,15 @@ const CreateGoal = () => {
 
       if (response.success) {
         const createdGoal = response.data;
-        
+
         // Check if goal was auto-completed (current = target)
         if (createdGoal.status === 'Completed' && createdGoal.points > 0) {
           // Goal auto-completed! Refresh user to get updated points
           await refreshUser();
-          
+
           // Show success message
           setSuccess(`🎉 Goal auto-completed! You earned ${createdGoal.points} points!`);
-          
+
           // Navigate after 2 seconds
           setTimeout(() => {
             navigate('/goals');
@@ -104,14 +108,14 @@ const CreateGoal = () => {
             </div>
           )}
           {error && (
-            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
           <div className="mb-8">
             <Link
               to="/goals"
-              className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 mb-4 transition-colors duration-200"
+              className="inline-flex items-center text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 mb-4 transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Goals
@@ -126,7 +130,7 @@ const CreateGoal = () => {
             {/* Basic Information */}
             <div className="card-dark rounded-xl shadow-dark p-6">
               <div className="flex items-center space-x-3 mb-6">
-                <div className="p-2 bg-primary-500 dark:bg-primary-600 rounded-lg">
+                <div className="p-2 bg-green-500 dark:bg-green-600 rounded-lg">
                   <Target className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-dark">
@@ -145,7 +149,7 @@ const CreateGoal = () => {
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="e.g., Lose 5kg in 2 months"
-                    className="input-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-muted focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                     required
                   />
                 </div>
@@ -160,7 +164,7 @@ const CreateGoal = () => {
                     onChange={handleChange}
                     placeholder="Describe your goal and why it's important to you"
                     rows="3"
-                    className="textarea-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none resize-none"
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-muted focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none resize-none"
                   />
                 </div>
 
@@ -172,7 +176,7 @@ const CreateGoal = () => {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="select-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                     required
                   >
                     <option value="">Select Category</option>
@@ -190,6 +194,60 @@ const CreateGoal = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark mb-2">
+                    Goal Verification Type *
+                  </label>
+                  <select
+                    name="verificationType"
+                    value={formData.verificationType}
+                    onChange={handleChange}
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    required
+                  >
+                    <option value="auto_verifiable">Auto-verifiable (from logs)</option>
+                    <option value="confirmable">Confirmable (self-confirm with note)</option>
+                  </select>
+                  <p className="text-xs text-muted-dark mt-2">
+                    Auto-verifiable goals are completed only by verified activity evidence.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark mb-2">
+                    Metric Type *
+                  </label>
+                  <select
+                    name="metricType"
+                    value={formData.metricType}
+                    onChange={handleChange}
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    required
+                  >
+                    <option value="steps">Steps</option>
+                    <option value="calories">Calories Burned</option>
+                    <option value="sleep">Sleep (Hours)</option>
+                    <option value="water">Water Intake</option>
+                    <option value="activeMinutes">Active Minutes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark mb-2">
+                    Goal Mode *
+                  </label>
+                  <select
+                    name="goalMode"
+                    value={formData.goalMode}
+                    onChange={handleChange}
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    required
+                  >
+                    <option value="daily">Daily Target</option>
+                    <option value="weekly_cumulative">Weekly Cumulative</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -199,22 +257,8 @@ const CreateGoal = () => {
                 Target & Progress
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Current Value
-                  </label>
-                  <input
-                    type="number"
-                    name="currentValue"
-                    value={formData.currentValue}
-                    onChange={handleChange}
-                    placeholder="0"
-                    min="0"
-                    step="0.1"
-                    className="input-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
 
                 <div>
                   <label className="block text-sm font-medium text-dark mb-2">
@@ -228,7 +272,7 @@ const CreateGoal = () => {
                     placeholder="100"
                     min="0"
                     step="0.1"
-                    className="input-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-muted focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                     required
                   />
                 </div>
@@ -243,7 +287,7 @@ const CreateGoal = () => {
                     value={formData.unit}
                     onChange={handleChange}
                     placeholder="kg, steps, hours, km"
-                    className="input-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-muted focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                     required
                   />
                 </div>
@@ -258,7 +302,7 @@ const CreateGoal = () => {
                   name="targetDate"
                   value={formData.targetDate}
                   onChange={handleChange}
-                  className="input-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                  className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-muted focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                   required
                 />
               </div>
@@ -281,7 +325,7 @@ const CreateGoal = () => {
                     value={formData.motivationQuote}
                     onChange={handleChange}
                     placeholder="e.g., Every journey begins with a single step!"
-                    className="input-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                    className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-muted focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                   />
                 </div>
 
@@ -292,7 +336,7 @@ const CreateGoal = () => {
                     name="reminderEnabled"
                     checked={formData.reminderEnabled}
                     onChange={handleChange}
-                    className="w-5 h-5 text-primary-500 focus:ring-primary-500 border-gray-300 dark:border-dark-border rounded bg-white dark:bg-dark-bg"
+                    className="w-5 h-5 text-green-500 focus:ring-green-500 border-gray-300 dark:border-dark-border rounded bg-white dark:bg-dark-bg"
                   />
                   <label htmlFor="reminderEnabled" className="text-sm font-medium text-dark">
                     Enable reminders for this goal
@@ -308,7 +352,7 @@ const CreateGoal = () => {
                       name="reminderFrequency"
                       value={formData.reminderFrequency}
                       onChange={handleChange}
-                      className="select-dark w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
+                      className="bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 w-full px-4 py-3 rounded-lg focus:ring-2 outline-none"
                     >
                       <option value="Daily">Daily</option>
                       <option value="Weekly">Weekly</option>
@@ -331,7 +375,7 @@ const CreateGoal = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary-dark flex items-center space-x-2 px-6 py-3 rounded-lg transition-colors duration-200 font-semibold disabled:opacity-50"
+                className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white shadow-md dark:shadow-lg flex items-center space-x-2 px-6 py-3 rounded-lg transition-colors duration-200 font-semibold disabled:opacity-50"
               >
                 <Save className="w-5 h-5" />
                 <span>{loading ? 'Creating...' : 'Create Goal'}</span>

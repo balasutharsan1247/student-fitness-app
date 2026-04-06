@@ -5,7 +5,8 @@ const {
   getMe,
   updateProfile,
   updatePassword,
-  recalculateLevel,
+  markMessagesRead,
+  linkGoogleFit,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
@@ -33,8 +34,12 @@ router.put('/updateprofile', protect, updateProfile);
 // Update password
 router.put('/updatepassword', protect, updatePassword);
 
-// Recalculate level
-router.put('/recalculate-level', protect, recalculateLevel);
+// Mark all encouragement messages as read
+router.put('/messages/read', protect, markMessagesRead);
+
+// Link Google Fit account
+router.post('/googlefit/link', protect, linkGoogleFit);
+
 
 // Export router
 module.exports = router;
