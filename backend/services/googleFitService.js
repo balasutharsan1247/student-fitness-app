@@ -8,15 +8,20 @@ const User = require('../models/User');
  */
 class GoogleFitService {
   constructor() {
-    this.clientId = process.env.GOOGLE_CLIENT_ID;
-    this.clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    this.redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    this.clientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+    this.clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    this.redirectUri = (process.env.GOOGLE_REDIRECT_URI || '').trim();
 
     this.oauth2Client = new google.auth.OAuth2(
       this.clientId,
       this.clientSecret,
       this.redirectUri
     );
+    
+    // Self-check for Render
+    if (!this.clientId) console.error('🚫 MISSING: GOOGLE_CLIENT_ID on Render!');
+    if (!this.clientSecret) console.error('🚫 MISSING: GOOGLE_CLIENT_SECRET on Render!');
+    if (!this.redirectUri) console.error('🚫 MISSING: GOOGLE_REDIRECT_URI on Render!');
   }
 
   /**
