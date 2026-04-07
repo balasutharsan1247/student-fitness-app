@@ -14,6 +14,7 @@ class GoogleFitService {
 
   async initialize() {
     if (this.isInitialized) return;
+    console.log('Initializing Google Fit with Client ID:', this.CLIENT_ID);
 
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -43,7 +44,7 @@ class GoogleFitService {
             reject(new Error(response.error));
             return;
           }
-          
+
           if (response.code) {
             // Revolve with the auth code to be sent to backend
             resolve(response.code);
@@ -113,13 +114,13 @@ class GoogleFitService {
       };
     } catch (error) {
       console.error('Google Fit API Error:', error);
-      
+
       // If token expired, clear it
       if (error.message?.includes('401') || error.message?.includes('403')) {
         this.disconnect();
         throw new Error('Session expired. Please reconnect Google Fit.');
       }
-      
+
       throw error;
     }
   }
@@ -153,7 +154,7 @@ class GoogleFitService {
     try {
       const points = data.bucket?.[0]?.dataset?.[0]?.point || [];
       if (points.length === 0) return 0;
-      
+
       // Sum all values if multiple points
       return points.reduce((sum, point) => {
         return sum + (point.value?.[0]?.[valueType] || 0);
@@ -167,15 +168,15 @@ class GoogleFitService {
   getValidToken() {
     const token = localStorage.getItem('google_fit_token');
     const expiry = localStorage.getItem('google_fit_token_expiry');
-    
+
     if (!token || !expiry) return null;
-    
+
     // Check if token expired
     if (new Date().getTime() > parseInt(expiry)) {
       this.disconnect();
       return null;
     }
-    
+
     return token;
   }
 

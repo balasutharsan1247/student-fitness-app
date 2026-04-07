@@ -355,7 +355,7 @@ const LogActivity = () => {
               <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start space-x-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-amber-800 dark:text-amber-300">
-                  <span className="font-bold">Tip for better accuracy:</span> Use portion sizes like <span className="font-semibold italic">"1 cup rice"</span> or <span className="font-semibold italic">"2 chapatis"</span> instead of just "rice". This helps our API calculate your Life Score more accurately.
+                  <span className="font-bold">Tip for better accuracy:</span> Use portion sizes like <span className="font-semibold italic">"1 cup rice"</span> or <span className="font-semibold italic">"2 chapatis"</span> instead of just "rice".
                 </p>
               </div>
 
