@@ -111,7 +111,7 @@ const Register = () => {
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary-500 p-3 rounded-full">
+            <div className="bg-green-500 p-3 rounded-full">
               <Activity className="w-10 h-10 text-white" />
             </div>
           </div>
